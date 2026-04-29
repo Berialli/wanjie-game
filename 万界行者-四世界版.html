@@ -1,0 +1,4423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万界行者 - 四世界版</title>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a2a 100%); min-height: 100vh; color: #e0e0ff; overflow-x: hidden; }
+        .particles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
+        .particle { position: absolute; width: 2px; height: 2px; background: rgba(100,150,255,0.6); border-radius: 50%; animation: float 15s infinite; }
+        @keyframes float { 0%,100% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+        @keyframes shimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes cardFlip { 0% { transform: rotateY(180deg) scale(0.5); } 50% { transform: rotateY(90deg) scale(1.1); } 100% { transform: rotateY(0deg) scale(1); } }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 5px rgba(100,150,255,0.3); } 50% { box-shadow: 0 0 20px rgba(100,150,255,0.6); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .game-container { max-width: 900px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        .game-title { text-align: center; padding: 30px 0; }
+        .game-title h1 { font-size: 2.5em; background: linear-gradient(90deg, #6af, #a6f, #f6a, #6af); background-size: 300% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 5s infinite; }
+        .game-title .subtitle { color: #88a; margin-top: 8px; font-size: 1em; letter-spacing: 3px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px; }
+        .save-info { color: #88a; font-size: 0.85em; }
+        .save-btn, .load-btn, .new-btn { border-radius: 8px; padding: 8px 15px; cursor: pointer; font-size: 0.9em; transition: all 0.3s; margin-left: 8px; color: #fff; }
+        .save-btn { background: linear-gradient(135deg, rgba(60,150,80,0.8),rgba(40,120,60,0.8)); border: 1px solid rgba(100,200,120,0.4); }
+        .load-btn { background: linear-gradient(135deg, rgba(60,100,150,0.8),rgba(40,80,120,0.8)); border: 1px solid rgba(100,150,220,0.4); }
+        .new-btn { background: linear-gradient(135deg, rgba(150,60,60,0.8),rgba(120,40,40,0.8)); border: 1px solid rgba(220,100,100,0.4); }
+        .save-btn:hover, .load-btn:hover, .new-btn:hover { transform: scale(1.05); }
+        /* 系统面板 */
+        .system-panel { background: rgba(20,20,50,0.8); border: 1px solid rgba(100,150,255,0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; display: none; }
+        .system-panel.active { display: block; }
+        .panel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(100,150,255,0.2); }
+        .avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #3af, #a3f); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 0 15px rgba(100,150,255,0.5); }
+        .player-info { flex: 1; }
+        .player-name { font-size: 1.1em; font-weight: bold; color: #6cf; }
+        .player-level { color: #aa8; font-size: 0.8em; }
+        .exp-bar { height: 5px; background: rgba(50,50,80,0.8); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .exp-fill { height: 100%; background: linear-gradient(90deg, #4a8, #6ca); transition: width 0.5s; }
+        .status-bar { display: flex; gap: 15px; flex-wrap: wrap; }
+        .stat { flex: 1; min-width: 80px; }
+        .stat-label { color: #88a; font-size: 0.8em; margin-bottom: 3px; }
+        .stat-value { font-size: 1.1em; font-weight: bold; }
+        .stat-value.hp { color: #f66; } .stat-value.atk { color: #fa6; } .stat-value.def { color: #6af; } .stat-value.spd { color: #6f6; }
+        .talent-panel { background: rgba(30,30,60,0.6); border-radius: 8px; padding: 12px; margin-top: 12px; }
+        .talent-title { color: #aaf; margin-bottom: 8px; font-size: 0.85em; }
+        .talent-card { background: linear-gradient(135deg, rgba(80,100,150,0.4),rgba(60,80,130,0.4)); border: 1px solid rgba(100,150,255,0.4); border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .talent-icon { width: 35px; height: 35px; background: radial-gradient(circle, #6af 0%, #23a 100%); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .talent-name { font-weight: bold; color: #6cf; font-size: 0.95em; }
+        .talent-rank { font-size: 0.75em; padding: 2px 6px; border-radius: 8px; background: rgba(100,150,255,0.2); margin-left: 8px; }
+        .talent-rank.d { color: #6af; } .talent-rank.c { color: #a6f; } .talent-rank.b { color: #fa6; } .talent-rank.a { color: #ff6; }
+        .talent-rank.s { background: linear-gradient(90deg,#f66,#a6f,#6af,#6fa); color: #fff; }
+        .talent-rank.ss { background: linear-gradient(90deg,#f80,#ff0,#fa0); color: #fff; text-shadow: 0 0 6px rgba(255,200,0,0.8); }
+        .talent-rank.sss { background: linear-gradient(90deg,#f0f,#a0f,#f6a); color: #fff; text-shadow: 0 0 8px rgba(200,100,255,0.9); }
+        .talent-rank.超神 { background: linear-gradient(90deg,#ff0,#f80,#f00,#f0f,#0ff); color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.9); animation: pulseGlow 1s infinite; }
+        .talent-desc { font-size: 0.8em; color: #aac; margin-top: 4px; }
+        /* 世界进度（动态3个世界） */
+        .world-progress { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .world-card { flex: 1; min-width: 100px; background: rgba(30,30,60,0.6); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .world-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(100,150,255,0.2); }
+        .world-name { font-weight: bold; font-size: 0.85em; }
+        .world-name.zombie { color: #f66; } .world-name.xianxia { color: #6cf; }
+        .world-name.star { color: #fa6; } .world-name.cyber { color: #a6f; }
+        .world-stages { color: #88a; font-size: 0.75em; margin-top: 4px; }
+        .world-card.completed { border: 1px solid rgba(100,255,100,0.5); }
+        .world-card.locked { opacity: 0.5; cursor: not-allowed; }
+        .world-card.current { border: 2px solid #6af; animation: pulseGlow 2s infinite; }
+        /* 关卡信息 */
+        .stage-info { text-align: center; padding: 10px; background: rgba(50,50,80,0.5); border-radius: 8px; margin-bottom: 15px; display: none; }
+        .stage-info.active { display: block; }
+        .stage-num { color: #aa8; font-size: 0.85em; }
+        .stage-name { color: #6cf; font-size: 1.1em; margin-top: 3px; }
+        .stage-mode-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 0.75em; margin-top: 5px; font-weight: bold; }
+        .stage-mode-tag.battle { background: rgba(255,60,60,0.3); color: #f88; }
+        .stage-mode-tag.puzzle { background: rgba(60,150,255,0.3); color: #8cf; }
+        .stage-mode-tag.find { background: rgba(60,200,120,0.3); color: #8f8; }
+        .stage-mode-tag.talk { background: rgba(200,150,60,0.3); color: #fa8; }
+        .stage-mode-tag.rescue { background: rgba(255,100,200,0.3); color: #f8f; }
+        .stage-mode-tag.stealth { background: rgba(150,150,150,0.3); color: #ccc; }
+        .stage-mode-tag.survive { background: rgba(255,150,50,0.3); color: #f96; }
+        /* 精灵对话 */
+        .spirit-dialog { display: none; background: rgba(100,150,255,0.1); border: 1px solid rgba(100,150,255,0.4); border-radius: 12px; padding: 15px; margin-bottom: 15px; position: relative; }
+        .spirit-dialog.active { display: block; }
+        .spirit-dialog::before { content: '🧚'; position: absolute; top: -12px; left: 15px; font-size: 24px; animation: bounce 1s infinite; }
+        .spirit-name { color: #aaf; font-weight: bold; margin-bottom: 8px; font-size: 0.9em; }
+        .spirit-text { color: #ccf; line-height: 1.7; font-size: 0.95em; }
+        /* 故事区 */
+        .story-area { background: rgba(15,15,35,0.9); border: 1px solid rgba(100,150,255,0.2); border-radius: 12px; padding: 25px; margin-bottom: 15px; min-height: 250px; }
+        .story-text { font-size: 1.05em; line-height: 1.9; color: #d0d0ff; }
+        .story-text .highlight { color: #6cf; font-weight: bold; }
+        .story-text .danger { color: #f66; }
+        .story-text .success { color: #6f6; }
+        .story-text .system { color: #aa8; font-style: italic; border-left: 3px solid #aa8; padding-left: 12px; margin: 12px 0; display: block; }
+        .story-text .choice-text { background: rgba(100,150,255,0.1); border-left: 3px solid #6af; padding: 8px 12px; margin: 8px 0; display: block; }
+        .choices-area { display: flex; flex-direction: column; gap: 10px; }
+        .choice-btn { background: linear-gradient(135deg, rgba(40,60,100,0.8),rgba(30,50,90,0.8)); border: 1px solid rgba(100,150,255,0.4); border-radius: 10px; padding: 15px 20px; color: #d0e0ff; font-size: 1em; cursor: pointer; transition: all 0.3s; text-align: left; position: relative; overflow: hidden; }
+        .choice-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg,transparent,rgba(100,150,255,0.2),transparent); transition: left 0.5s; }
+        .choice-btn:hover { background: linear-gradient(135deg, rgba(60,80,130,0.9),rgba(50,70,110,0.9)); border-color: rgba(150,180,255,0.6); transform: translateX(5px); box-shadow: 0 5px 20px rgba(100,150,255,0.3); }
+        .choice-btn:hover::before { left: 100%; }
+        .choice-btn .num { display: inline-block; width: 25px; height: 25px; background: rgba(100,150,255,0.3); border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; color: #6cf; font-size: 0.9em; }
+        /* 战斗区 */
+        .battle-area { display: none; background: rgba(20,15,15,0.95); border: 2px solid rgba(255,100,100,0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .battle-area.active { display: block; }
+        .battle-header { text-align: center; color: #f88; font-size: 1.3em; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255,100,100,0.5); }
+        .battle-arena { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .battle-entity { text-align: center; width: 120px; }
+        .entity-avatar { width: 65px; height: 65px; margin: 0 auto 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .player-avatar { background: linear-gradient(135deg, #3af, #a3f); }
+        .enemy-avatar { background: linear-gradient(135deg, #f33, #a33); }
+        .entity-name { font-weight: bold; margin-bottom: 4px; font-size: 0.9em; }
+        .entity-hp-bar { height: 10px; background: rgba(50,50,50,0.8); border-radius: 5px; overflow: hidden; margin-bottom: 4px; }
+        .entity-hp-fill { height: 100%; background: linear-gradient(90deg,#f44,#f88); transition: width 0.3s; }
+        .player-hp-fill { background: linear-gradient(90deg,#4a8,#6ca); }
+        .entity-hp-text { font-size: 0.8em; color: #aaa; }
+        .battle-vs { font-size: 1.5em; color: #f66; text-shadow: 0 0 10px rgba(255,100,100,0.5); }
+        .battle-log { max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; font-size: 0.85em; margin-bottom: 12px; }
+        .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .log-entry:last-child { border-bottom: none; }
+        .log-damage { color: #f88; } .log-heal { color: #8f8; } .log-miss { color: #888; }
+        .battle-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .action-btn { background: linear-gradient(135deg, rgba(60,40,40,0.9),rgba(80,30,30,0.9)); border: 1px solid rgba(255,100,100,0.5); border-radius: 8px; padding: 10px; color: #faa; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .action-btn:hover { background: linear-gradient(135deg, rgba(80,50,50,0.9),rgba(100,40,40,0.9)); transform: scale(1.03); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .action-btn .icon { font-size: 1.3em; margin-bottom: 3px; }
+        .action-btn .label { font-size: 0.8em; }
+        /* 游戏结束 */
+        .game-over { display: none; text-align: center; padding: 40px 20px; }
+        .game-over.active { display: block; }
+        .game-over.victory h2 { color: #6f6; text-shadow: 0 0 20px rgba(100,255,100,0.5); }
+        .game-over.defeat h2 { color: #f66; text-shadow: 0 0 20px rgba(255,100,100,0.5); }
+        .game-over h2 { font-size: 2em; margin-bottom: 15px; }
+        .game-over h3 { color: #aaf; font-size: 1.2em; margin-bottom: 10px; }
+        .game-over p { color: #aac; margin-top: 10px; line-height: 1.7; }
+        .restart-btn { margin-top: 25px; padding: 12px 35px; font-size: 1.1em; background: linear-gradient(135deg, #3af, #a3f); border: none; border-radius: 25px; color: #fff; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; }
+        .restart-btn:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(100,150,255,0.5); }
+        /* 天赋抽取 */
+        .talent-draw { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .talent-draw.active { display: flex; }
+        .talent-card-anim { width: 180px; height: 250px; background: linear-gradient(135deg, #1a1a3a, #2a2a5a); border: 3px solid #6af; border-radius: 12px; animation: cardFlip 1.5s forwards; }
+        .talent-card-inner { padding: 15px; text-align: center; }
+        .talent-card-inner .icon { font-size: 50px; margin: 25px 0; }
+        .talent-card-inner .name { color: #6cf; font-size: 1.1em; font-weight: bold; }
+        .talent-card-inner .rank { margin-top: 8px; }
+        .confirm-talent { margin-top: 20px; padding: 8px 25px; background: linear-gradient(135deg, #3af, #a3f); border: none; border-radius: 18px; color: #fff; font-size: 0.9em; cursor: pointer; }
+        /* 物品弹窗 */
+        .item-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0); background: rgba(30,30,60,0.95); border: 2px solid #6af; border-radius: 12px; padding: 25px; text-align: center; z-index: 100; transition: transform 0.3s; }
+        .item-popup.show { transform: translate(-50%,-50%) scale(1); }
+        .item-popup .item-icon { font-size: 40px; margin-bottom: 12px; }
+        .item-popup .item-name { color: #6cf; font-size: 1.1em; font-weight: bold; }
+        .item-popup .item-desc { color: #aac; margin-top: 8px; font-size: 0.85em; }
+        .item-popup .close-btn { margin-top: 15px; padding: 6px 20px; background: #6af; border: none; border-radius: 15px; color: #fff; cursor: pointer; }
+        /* 存档列表 */
+        .save-list { display: none; background: rgba(30,30,60,0.95); border: 2px solid #6af; border-radius: 12px; padding: 20px; margin-bottom: 15px; max-height: 400px; overflow-y: auto; }
+        .save-list.active { display: block; }
+        .save-list h3 { color: #aaf; margin-bottom: 15px; }
+        .save-slot { background: rgba(40,50,80,0.6); border: 1px solid rgba(100,150,255,0.3); border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .save-slot:hover { background: rgba(60,70,100,0.7); border-color: rgba(100,150,255,0.6); }
+        .save-slot-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .save-slot-name { color: #6cf; font-weight: bold; }
+        .save-slot-date { color: #88a; font-size: 0.85em; }
+        .save-slot-detail { color: #aac; font-size: 0.85em; }
+        .no-saves { color: #666; text-align: center; padding: 30px; }
+        .close-save-list { margin-top: 15px; padding: 8px 25px; background: rgba(100,100,130,0.5); border: 1px solid rgba(150,150,180,0.4); border-radius: 8px; color: #aac; cursor: pointer; }
+        /* 系统空间选择界面 */
+        .system-space { display: none; padding: 20px; animation: fadeIn 0.5s; }
+        .system-space.active { display: block; }
+        .space-title { text-align: center; margin-bottom: 25px; }
+        .space-title h2 { font-size: 1.8em; color: #6cf; text-shadow: 0 0 15px rgba(100,150,255,0.5); }
+        .space-title p { color: #88a; margin-top: 8px; }
+        .world-selector { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .world-option { background: rgba(25,25,55,0.8); border: 2px solid rgba(100,150,255,0.3); border-radius: 15px; padding: 20px; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .world-option:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(100,150,255,0.3); }
+        .world-option.locked { opacity: 0.4; cursor: not-allowed; }
+        .world-option.locked:hover { transform: none; box-shadow: none; }
+        .world-option.completed { border-color: rgba(100,255,100,0.5); }
+        .world-option .world-icon { font-size: 3em; margin-bottom: 10px; }
+        .world-option .world-title { font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
+        .world-option .world-desc { color: #88a; font-size: 0.85em; }
+        .world-option .world-status { margin-top: 10px; font-size: 0.8em; padding: 3px 10px; border-radius: 10px; display: inline-block; }
+        .world-status.available { background: rgba(60,200,120,0.3); color: #8f8; }
+        .world-status.done { background: rgba(100,150,255,0.3); color: #8cf; }
+        .world-status.locked-st { background: rgba(150,150,150,0.3); color: #999; }
+        /* 休息区 */
+        .rest-area { background: rgba(20,40,30,0.6); border: 1px solid rgba(100,200,120,0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
+        .rest-area h3 { color: #8f8; margin-bottom: 10px; }
+        .rest-btn { padding: 10px 25px; background: linear-gradient(135deg, rgba(60,150,80,0.8),rgba(40,120,60,0.8)); border: 1px solid rgba(100,200,120,0.4); border-radius: 10px; color: #8f8; cursor: pointer; font-size: 1em; transition: all 0.3s; margin: 5px; }
+        .rest-btn:hover { transform: scale(1.05); }
+        /* 迷你游戏区域（解密等） */
+        .mini-game { display: none; background: rgba(20,20,50,0.95); border: 2px solid rgba(100,200,255,0.4); border-radius: 12px; padding: 20px; margin-bottom: 15px; text-align: center; }
+        .mini-game.active { display: block; }
+        .mini-game h3 { color: #8cf; margin-bottom: 15px; }
+        .puzzle-area { margin: 15px 0; }
+        .puzzle-input { background: rgba(40,40,80,0.8); border: 2px solid rgba(100,150,255,0.4); border-radius: 8px; padding: 12px; color: #e0e0ff; font-size: 1.1em; text-align: center; width: 80%; max-width: 300px; margin-bottom: 10px; }
+        .puzzle-input:focus { outline: none; border-color: #6af; }
+        .puzzle-submit { padding: 10px 25px; background: linear-gradient(135deg, #3af, #a3f); border: none; border-radius: 10px; color: #fff; cursor: pointer; font-size: 1em; transition: all 0.3s; }
+        .puzzle-submit:hover { transform: scale(1.05); }
+        .puzzle-hint { color: #88a; font-size: 0.85em; margin-top: 10px; }
+        .puzzle-timer { color: #fa6; font-size: 1.2em; margin: 10px 0; }
+        .puzzle-progress { color: #8cf; font-size: 0.9em; }
+        /* 物品搜索 */
+        .search-area { display: none; background: rgba(20,40,20,0.95); border: 2px solid rgba(100,200,100,0.4); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .search-area.active { display: block; }
+        .search-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+        .search-cell { aspect-ratio: 1; background: rgba(40,60,40,0.6); border: 1px solid rgba(100,200,100,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5em; transition: all 0.3s; }
+        .search-cell:hover { background: rgba(60,80,60,0.8); transform: scale(1.05); }
+        .search-cell.found { background: rgba(60,200,80,0.3); border-color: #6f6; }
+        .search-cell.empty { background: rgba(60,40,40,0.3); border-color: rgba(200,100,100,0.3); }
+        .search-cell.trap { background: rgba(200,60,60,0.3); border-color: #f66; }
+        .search-info { color: #aac; font-size: 0.9em; margin-top: 10px; }
+        /* 背包/装备面板 */
+        .inventory-panel { display: none; background: rgba(30,30,60,0.95); border: 2px solid #6af; border-radius: 12px; padding: 20px; margin-bottom: 15px; max-height: 500px; overflow-y: auto; }
+        .inventory-panel.active { display: block; }
+        .inv-list, .equip-list { display: flex; flex-direction: column; gap: 8px; }
+        .inv-item, .equip-slot { display: flex; align-items: center; gap: 10px; background: rgba(40,50,80,0.6); border: 1px solid rgba(100,150,255,0.3); border-radius: 8px; padding: 10px; transition: all 0.3s; }
+        .inv-item:hover, .equip-slot:hover { background: rgba(60,70,100,0.7); }
+        .inv-icon, .equip-icon { width: 40px; height: 40px; background: rgba(60,80,120,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .inv-icon.empty, .equip-icon.empty { opacity: 0.4; }
+        .inv-info, .equip-info { flex: 1; min-width: 0; }
+        .inv-name, .equip-name { font-size: 0.9em; font-weight: bold; color: #6cf; }
+        .inv-name.empty, .equip-name.empty { color: #666; font-weight: normal; }
+        .inv-desc, .equip-desc { font-size: 0.8em; color: #88a; margin-top: 2px; }
+        .inv-btn { padding: 4px 12px; background: rgba(100,150,255,0.3); border: 1px solid rgba(100,150,255,0.4); border-radius: 6px; color: #8cf; cursor: pointer; font-size: 0.8em; transition: all 0.2s; flex-shrink: 0; }
+        .inv-btn:hover { background: rgba(100,150,255,0.5); }
+        .inv-btn-danger { background: rgba(200,100,100,0.2); border-color: rgba(200,100,100,0.4); color: #f88; }
+        .inv-btn-danger:hover { background: rgba(200,100,100,0.4); }
+        .rarity-common { color: #ccc; }
+        .rarity-uncommon { color: #6f6; }
+        .rarity-rare { color: #6cf; }
+        .rarity-epic { color: #a6f; }
+        .rarity-legendary { color: #ff6; font-weight: bold; }
+        .attr-points-header { color: #fa6; font-size: 0.9em; margin-bottom: 10px; text-align: center; }
+        .attr-points-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .buff-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 10px; font-size: 0.75em; background: rgba(250,166,100,0.2); color: #fa6; border: 1px solid rgba(250,166,100,0.3); }
+        .buff-tag .buff-turns { color: #fd0; font-weight: bold; }
+        .talent-mini-card { background: linear-gradient(135deg, rgba(80,100,150,0.3),rgba(60,80,130,0.3)); border: 1px solid rgba(100,150,255,0.3); border-radius: 8px; padding: 8px 10px; margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+        .talent-mini-card .tmi-icon { font-size: 1.2em; }
+        .talent-mini-card .tmi-name { color: #6cf; font-weight: bold; font-size: 0.85em; }
+        .talent-mini-card .tmi-desc { color: #aac; font-size: 0.75em; margin-top: 2px; }
+        .talent-keep-choice { background: rgba(60,100,180,0.3); border: 2px solid #6af; border-radius: 12px; padding: 15px; margin: 10px 0; cursor: pointer; transition: all 0.3s; }
+        .talent-keep-choice:hover { background: rgba(80,120,200,0.5); transform: scale(1.02); }
+        .copyright-bar { text-align: center; padding: 15px; margin-top: 30px; color: #555; font-size: 0.8em; border-top: 1px solid rgba(100,100,130,0.2); }
+        .copyright-bar a { color: #6af; text-decoration: none; }
+        .copyright-bar .license { color: #666; margin-top: 5px; font-size: 0.9em; }
+        .copyright-bar .source { color: #777; margin-top: 5px; font-size: 0.9em; }
+        #skipBtn.active { background: linear-gradient(135deg,rgba(255,150,50,0.8),rgba(200,100,30,0.8)); border: 1px solid rgba(255,200,100,0.5); animation: pulseGlow 1s infinite; }
+        @media (max-width: 600px) {
+            .game-title h1 { font-size: 1.8em; }
+            .story-area { padding: 15px; }
+            .battle-actions { grid-template-columns: repeat(2, 1fr); }
+            .world-selector { grid-template-columns: 1fr; }
+            .search-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    
+</style>
+</head>
+<body>
+
+    <div class="particles" id="particles"></div>
+    <div class="game-container">
+        <div class="game-title">
+            <h1>万界行者</h1>
+            <div class="subtitle">四世界版 · 多模式冒险</div>
+        </div>
+        <div class="top-bar" id="topBar">
+            <div class="save-info" id="saveInfo">未存档</div>
+            <div>
+                <button class="save-btn" onclick="showSaveList('save')">💾 存档</button>
+                <button class="load-btn" onclick="showSaveList('load')">📂 读档</button>
+                <button class="new-btn" onclick="confirmNewGame()">🆕 新游戏</button>
+                <button class="save-btn" onclick="toggleInventory()" style="background:linear-gradient(135deg,rgba(120,100,50,0.8),rgba(100,80,30,0.8));border:1px solid rgba(200,180,100,0.4);">🎒 背包</button>
+                <button class="save-btn" id="skipBtn" onclick="toggleSkipMode()" style="background:linear-gradient(135deg,rgba(100,80,150,0.8),rgba(80,60,120,0.8));border:1px solid rgba(180,150,255,0.4);">⏩ 快进</button>
+            </div>
+        </div>
+        <div class="save-list" id="saveList">
+            <h3>📋 存档列表</h3>
+            <div id="saveSlots"></div>
+            <button class="close-save-list" onclick="closeSaveList()">关闭</button>
+        </div>
+        <div class="system-panel" id="systemPanel">
+            <div class="panel-header">
+                <div class="avatar">👤</div>
+                <div class="player-info">
+                    <div class="player-name" id="playerName">林夜</div>
+                    <div class="player-level" id="playerLevel">Lv.1 · 凡人</div>
+                    <div class="exp-bar"><div class="exp-fill" id="expFill" style="width:0%"></div></div>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="stat"><div class="stat-label">生命</div><div class="stat-value hp" id="hpValue">100/100</div></div>
+                <div class="stat"><div class="stat-label">攻击</div><div class="stat-value atk" id="atkValue">15</div></div>
+                <div class="stat"><div class="stat-label">防御</div><div class="stat-value def" id="defValue">10</div></div>
+                <div class="stat"><div class="stat-label">速度</div><div class="stat-value spd" id="spdValue">12</div></div>
+                <div class="stat"><div class="stat-label">金币</div><div class="stat-value" style="color:#fd0;" id="goldValue">0</div></div>
+                <div class="stat"><div class="stat-label">属性点</div><div class="stat-value" style="color:#fa6;" id="freePointsValue">0</div></div>
+            </div>
+            <!-- Buff状态栏 -->
+            <div id="buffBar" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0;"></div>
+            <div class="talent-panel">
+                <div class="talent-title">当前天赋 <span id="talentCount" style="color:#88a;font-size:0.75em;"></span></div>
+                <div id="talentList">
+                    <div class="talent-card" id="talentCard">
+                        <div class="talent-icon" id="talentIcon">⚡</div>
+                        <div class="talent-info">
+                            <div><span class="talent-name" id="talentName">无天赋</span><span id="talentRank"></span></div>
+                            <div class="talent-desc" id="talentDesc">等待抽取</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="world-progress" id="worldProgress"></div>
+        </div>
+        <!-- 背包/装备面板 -->
+        <div class="inventory-panel" id="inventoryPanel">
+            <h3 style="color:#aaf;margin-bottom:12px;">🎒 背包 <span id="invCount" style="color:#88a;font-size:0.8em;">(0/20)</span></h3>
+            <div id="inventoryItems" class="inv-list"></div>
+            <h3 style="color:#aaf;margin:15px 0 12px;">⚔️ 装备</h3>
+            <div id="equipmentSlots" class="equip-list"></div>
+            <!-- 属性点分配区 -->
+            <div id="attrPointsArea" style="margin-top:15px;"></div>
+            <button class="close-save-list" onclick="document.getElementById('inventoryPanel').classList.remove('active')">关闭</button>
+        </div>
+        <!-- 系统空间 -->
+        <div class="system-space" id="systemSpace">
+            <div class="space-title">
+                <h2>🌀 系统空间</h2>
+                <p>万界交汇之地，你可以在此休整或选择下一个世界</p>
+            </div>
+            <div class="rest-area">
+                <h3>🛋️ 休整区</h3>
+                <button class="rest-btn" onclick="restFull()">完全恢复（恢复全部生命值）</button>
+                <button class="rest-btn" onclick="restPartial()">短暂休息（恢复50%生命值）</button>
+            </div>
+            <h3 style="color:#aaf;margin-bottom:15px;text-align:center;">🌍 选择世界</h3>
+            <div class="world-selector" id="worldSelector"></div>
+        </div>
+        <!-- 关卡信息 -->
+        <div class="stage-info" id="stageInfo">
+            <div class="stage-num" id="stageNum">丧尸围城 · 第1关</div>
+            <div class="stage-name" id="stageName">废墟街道</div>
+            <div id="stageModeTag"></div>
+        </div>
+        <!-- 精灵对话 -->
+        <div class="spirit-dialog" id="spiritDialog">
+            <div class="spirit-name">零号</div>
+            <div class="spirit-text" id="spiritText">欢迎~</div>
+        </div>
+        <!-- 迷你游戏区 -->
+        <div class="mini-game" id="miniGame">
+            <h3 id="miniGameTitle">🧩 谜题</h3>
+            <div class="puzzle-area" id="puzzleArea"></div>
+        </div>
+        <!-- 搜索区 -->
+        <div class="search-area" id="searchArea">
+            <h3 style="color:#8f8;margin-bottom:10px;" id="searchTitle">🔍 搜索物品</h3>
+            <div class="search-info" id="searchInfo">点击格子搜索物品，小心陷阱！</div>
+            <div class="search-grid" id="searchGrid"></div>
+        </div>
+        <!-- 战斗区 -->
+        <div class="battle-area" id="battleArea">
+            <div class="battle-header">⚔️ 战斗开始</div>
+            <div class="battle-arena">
+                <div class="battle-entity">
+                    <div class="entity-avatar player-avatar">👤</div>
+                    <div class="entity-name" id="playerBattleName">林夜</div>
+                    <div class="entity-hp-bar"><div class="entity-hp-fill player-hp-fill" id="playerHpFill" style="width:100%"></div></div>
+                    <div class="entity-hp-text" id="playerHpText">100/100</div>
+                </div>
+                <div class="battle-vs">VS</div>
+                <div class="battle-entity">
+                    <div class="entity-avatar enemy-avatar" id="enemyIcon">🧟</div>
+                    <div class="entity-name" id="enemyName">感染丧尸</div>
+                    <div class="entity-hp-bar"><div class="entity-hp-fill" id="enemyHpFill" style="width:100%"></div></div>
+                    <div class="entity-hp-text" id="enemyHpText">50/50</div>
+                </div>
+            </div>
+            <div class="battle-log" id="battleLog"></div>
+            <div class="battle-actions" id="battleActions">
+                <button class="action-btn" onclick="playerAttack()"><div class="icon">⚔️</div><div class="label">攻击</div></button>
+                <button class="action-btn" onclick="playerDefend()"><div class="icon">🛡️</div><div class="label">防御</div></button>
+                <button class="action-btn" onclick="playerDodge()"><div class="icon">💨</div><div class="label">闪避</div></button>
+                <button class="action-btn" onclick="playerHeal()"><div class="icon">💊</div><div class="label">回复</div></button>
+                <button class="action-btn" onclick="useSkill()" id="skillBtn"><div class="icon">✨</div><div class="label">天赋技</div></button>
+            </div>
+        </div>
+        <!-- 故事区 -->
+        <div class="story-area">
+            <div class="story-text" id="storyText"></div>
+        </div>
+        <div class="choices-area" id="choicesArea"></div>
+        <!-- 游戏结束 -->
+        <div class="game-over" id="gameOver">
+            <h2 id="gameOverTitle">游戏结束</h2>
+            <h3 id="gameOverSubtitle"></h3>
+            <p id="gameOverText"></p>
+            <button class="restart-btn" onclick="restartGame()">重新开始</button>
+        </div>
+        <div class="copyright-bar">
+            <p>《万界行者》文字冒险游戏 · 四世界多模式版</p>
+            <p>原创故事 · 原创角色 · 原创世界观 · 原创游戏机制</p>
+            <p class="license">MIT 开源许可证 · 允许自由使用、修改、分发，但须保留原始版权声明和来源说明</p>
+            <p class="source">版本 v1.1.0 · 技术栈：HTML5 + CSS3 + JavaScript（纯前端，无框架依赖）· Emoji 图标（开源）</p>
+            <p class="source">游戏说明：<br>
+            四大世界：丧尸围城(12关) / 仙侠大陆(12关) / 星际殖民(13关) / 赛博朋克(14关)，共51关。<br>
+            关卡模式：战斗 / 解密 / 寻物 / 交流 / 潜行 / 救护 / 生存 / BOSS。<br>
+            难度系统：首次通关自动普通难度(敌人属性×0.6)，BOSS动态平衡(约10回合击杀)；已通关世界可选普通/困难/噩梦/地狱4个难度，高难度经验加倍。<br>
+            世界特色装备：每个世界有专属武器、防具、饰品(如青云剑、纳米战甲、量子武士刀等)，战斗中掉落，BOSS必掉2-3件世界装备，确保每世界至少获得一件装备。<br>
+            掉落系统：补给类道具(回复药)掉落率降低，装备掉落率大幅提升(普通战斗52%、BOSS必掉)；永久属性道具、buff药剂均衡掉落。<br>
+            天赋系统：8个等级(D/C/B/A/S/SS/SSS/超神)共24个天赋，每世界可抽3次，通关时可保留1个永久天赋，天赋效果可叠加。<br>
+            装备系统：武器/防具/饰品三大槽位，5种品质(普通/优秀/稀有/史诗/传说)，三大类装备每世界均有特色款。<br>
+            背包系统：初始20格，可扩展至100格(5级扩容：200/500/1000/2000/5000金币)。支持消耗品、永久属性道具、Buff道具。<br>
+            属性点系统：每升级获得3点自由属性点，可分配至生命/攻击/防御/速度(每点+3)。<br>
+            快进模式：开启后剧情跳过打字效果，战斗自动攻击(优先天赋技)。<br>
+            存档系统：支持多存档 + 自动存档，兼容旧版存档自动补全新字段。</p>
+        </div>
+    </div>
+    <!-- 弹窗 -->
+    <div class="talent-draw" id="talentDraw">
+        <div class="talent-card-anim">
+            <div class="talent-card-inner">
+                <div class="icon" id="drawTalentIcon">⚡</div>
+                <div class="name" id="drawTalentName">闪电反射</div>
+                <div class="rank"><span class="talent-rank d" id="drawTalentRank">D级</span></div>
+                <button class="confirm-talent" onclick="confirmTalent()">确认天赋</button>
+            </div>
+        </div>
+    </div>
+    <div class="item-popup" id="itemPopup">
+        <div class="item-icon" id="itemIcon">💊</div>
+        <div class="item-name" id="itemName">急救包</div>
+        <div class="item-desc" id="itemDesc">恢复30点生命值</div>
+        <button class="close-btn" onclick="closeItemPopup()">确认</button>
+    </div>
+
+
+
+<script>
+// 常量定义
+const SAVE_KEY = 'wanjie4_save_slots';
+const TOTAL_WORLDS = 4;
+const WORLD_ORDER = ['zombie','xianxia','scifi','cyber'];
+function getDifficulty(wk){return {zombie:'D',xianxia:'C',scifi:'B',cyber:'A'}[wk]||'D';}
+function getTotalStages(wk){return {zombie:12,xianxia:12,scifi:13,cyber:14}[wk]||12;}
+function getWorldName(wk){return WORLDS[wk]?WORLDS[wk].name:wk;}
+
+// ========== 谜题题库 ==========
+const puzzleBank = {
+    riddle: [
+        { q: '什么东西越洗越脏？', a: '水', hint: '生活中的常见事物' },
+        { q: '哪个数字最勤劳？哪个数字最懒惰？', a: '1和2', hint: '一不做二不休' },
+        { q: '什么样的路不能走？', a: '电路', hint: '与电子有关' },
+        { q: '什么东西天气越热它爬得越高？', a: '温度计', hint: '测量工具' },
+        { q: '一个人掉到海里为什么头发没有湿？', a: '光头', hint: '因为他没有' },
+        { q: '什么门永远关不上？', a: '球门', hint: '运动场上的' },
+        { q: '铁放在外面会生锈，金子呢？', a: '会被偷', hint: '和防备有关' },
+        { q: '什么人始终不敢洗澡？', a: '泥人', hint: '遇水会化的' },
+        { q: '狐狸精最擅长迷惑男人，那么什么"精"男女一起迷？', a: '酒精', hint: '喝的东西' },
+        { q: '世界上最长的车是什么车？', a: '堵车', hint: '让你心烦的事' }
+    ],
+    code: [
+        { q: '解密密码：a=1,b=2,c=3... 请输入 "hello" 对应的数字', a: '85121215', hint: 'h=8,e=5,l=12,o=15' },
+        { q: '2,4,8,16,?, 下一个数是什么？', a: '32', hint: '每个数是前一个的2倍' },
+        { q: '1,1,2,3,5,8,?, 下一个数是什么？', a: '13', hint: '前两个数相加等于第三个数' }
+    ]
+};
+</script>
+<script>
+// ========== data-enemies.js ==========
+// 万界行者 - 四世界版 敌人数据
+const enemies = {
+    zombie: { name: '感染丧尸', icon: '🧟', hp: 50, atk: 12, def: 5, spd: 8, exp: 20 },
+    runnerZombie: { name: '奔跑丧尸', icon: '🏃', hp: 35, atk: 18, def: 3, spd: 18, exp: 30 },
+    bruteZombie: { name: '巨型丧尸', icon: '👹', hp: 120, atk: 25, def: 12, spd: 5, exp: 50 },
+    survivor: { name: '堕落者', icon: '👤', hp: 70, atk: 20, def: 8, spd: 12, exp: 40 },
+    mutantZombie: { name: '变异丧尸', icon: '👻', hp: 80, atk: 22, def: 10, spd: 14, exp: 45 },
+    bossZombie: { name: '丧尸领主', icon: '💀', hp: 200, atk: 30, def: 15, spd: 10, exp: 100, boss: true },
+    cultist: { name: '魔修弟子', icon: '👤', hp: 60, atk: 18, def: 8, spd: 14, exp: 35 },
+    demonBeast: { name: '妖兽', icon: '🐉', hp: 90, atk: 25, def: 10, spd: 12, exp: 50 },
+    elderCultist: { name: '魔修长老', icon: '👴', hp: 100, atk: 28, def: 12, spd: 10, exp: 60 },
+    swordGhost: { name: '剑灵', icon: '⚔️', hp: 75, atk: 30, def: 6, spd: 20, exp: 55 },
+    demonLord: { name: '魔道宗主', icon: '😈', hp: 250, atk: 35, def: 18, spd: 12, exp: 150, boss: true },
+    heavenlyTribulation: { name: '天劫雷云', icon: '⛈️', hp: 300, atk: 40, def: 20, spd: 8, exp: 200, boss: true },
+    scifi: { name: '外星生物', icon: '👽', hp: 180, atk: 22, def: 12, spd: 15, exp: 35, gold: 20 },
+    scifi_boss: { name: '虫族女王', icon: '👑', hp: 800, atk: 45, def: 25, spd: 20, exp: 200, gold: 100, boss: true },
+    cyber: { name: '赛博改造人', icon: '🤖', hp: 150, atk: 28, def: 10, spd: 22, exp: 40, gold: 25 },
+    cyber_boss: { name: '超级AI', icon: '🧠', hp: 600, atk: 40, def: 30, spd: 25, exp: 250, gold: 120, boss: true }
+};
+
+</script>
+<script>
+// ========== talent-pool.js ==========
+// 万界行者 - 四世界版 天赋库
+const talentPool = {
+    D: [
+        { name: '闪电反射', icon: '⚡', desc: '反应速度提升300%', effect: 'dodge_up' },
+        { name: '铁壁', icon: '🛡️', desc: '防御力提升50%', effect: 'def_up' },
+        { name: '狂暴', icon: '🔥', desc: '攻击力提升80%', effect: 'atk_up' },
+        { name: '感知', icon: '👁️', desc: '可感知敌人位置', effect: 'sense' },
+        { name: '恢复', icon: '💚', desc: '每回合恢复3%最大生命', effect: 'regen' },
+    ],
+    C: [
+        { name: '剑意初现', icon: '🗡️', desc: '攻击附带20%额外伤害', effect: 'bonus_damage' },
+        { name: '疾风步', icon: '💨', desc: '闪避成功率提升30%', effect: 'speed_up' },
+        { name: '生命汲取', icon: '🩸', desc: '攻击回复伤害15%的生命', effect: 'lifesteal' },
+        { name: '铁拳', icon: '👊', desc: '普攻伤害提升25%', effect: 'punch_up' },
+    ],
+    B: [
+        { name: '剑意无双', icon: '⚔️', desc: '攻击有25%几率秒杀敌人', effect: 'crit_guaranteed' },
+        { name: '时空凝滞', icon: '⏳', desc: '敌人伤害降低20%', effect: 'time_slow' },
+        { name: '护体金光', icon: '✨', desc: '受到致命伤害时免疫一次', effect: 'shield' },
+    ],
+    A: [
+        { name: '因果律令', icon: '🌟', desc: '战斗开始必定先手', effect: 'first_strike' },
+        { name: '不死之身', icon: '💫', desc: '生命首次降到0时复活', effect: 'resurrection' },
+    ],
+    S: [
+        { name: '万界共鸣', icon: '🌈', desc: '全属性提升30%', effect: 'all_up' },
+        { name: '命运逆转', icon: '🎲', desc: '每次攻击伤害翻倍', effect: 'double_damage' },
+    ],
+    SS: [
+        { name: '混沌吞噬', icon: '🌀', desc: '攻击时吞噬敌人10%属性永久加成于自身', effect: 'chaos_devour' },
+        { name: '时空断裂', icon: '⏰', desc: '每次攻击额外附带一段无视防御的时空伤害', effect: 'void_strike' },
+        { name: '不灭意志', icon: '🔥', desc: '生命降至0时复活并全属性提升50%', effect: 'immortal_will' },
+    ],
+    SSS: [
+        { name: '万象归一', icon: '☯️', desc: '所有天赋效果翻倍，全属性提升60%', effect: 'omni_double' },
+        { name: '逆天改命', icon: '🔮', desc: '受到任何伤害有30%概率完全免疫', effect: 'fate_rewrite' },
+        { name: '无尽轮回', icon: '♾️', desc: '死亡后自动复活（每场战斗限1次），恢复80%生命', effect: 'endless_cycle' },
+    ],
+    '超神': [
+        { name: '万界主宰', icon: '👑', desc: '全属性提升100%，所有攻击必定暴击', effect: 'world_dominate' },
+        { name: '创世之光', icon: '💫', desc: '每次攻击造成敌人最大生命值15%的真实伤害', effect: 'genesis_light' },
+        { name: '超维感知', icon: '🧠', desc: '闪避率提升至90%，且每次闪避反伤敌人攻击力的200%', effect: 'ultra_sense' },
+    ],
+};
+
+// 天赋等级完整列表（从低到高，用于概率抽取等场景）
+const TALENT_RANKS = ['D', 'C', 'B', 'A', 'S', 'SS', 'SSS', '超神'];
+
+</script>
+<script>
+// ========== stages-data.js ==========
+// 万界行者 - 四世界版 关卡数据 (51关 双线剧情)
+const MODES = {
+  battle:  { name: '战斗', icon: '⚔️', desc: '与敌人正面对决', cls: 'battle', label: '⚔️ 战斗' },
+  puzzle:  { name: '解密', icon: '🧩', desc: '破解机关谜题', cls: 'puzzle', label: '🧩 解密' },
+  search:  { name: '寻物', icon: '🔍', desc: '在场景中搜寻关键物品', cls: 'find', label: '🔍 寻物' },
+  talk:    { name: '交流', icon: '💬', desc: '与其他角色对话获取信息', cls: 'talk', label: '💬 交流' },
+  rescue:  { name: '救护', icon: '🏥', desc: '救治伤员获取奖励', cls: 'rescue', label: '🏥 救护' },
+  stealth: { name: '潜行', icon: '👤', desc: '悄无声息穿越危险区域', cls: 'stealth', label: '👤 潜行' },
+  survive: { name: '生存', icon: '🏕️', desc: '在恶劣环境中坚持生存', cls: 'survive', label: '🏕️ 生存' },
+  boss:    { name: 'BOSS', icon: '👹', desc: '迎战强大的BOSS', cls: 'battle', label: '👹 BOSS' },
+  clear:   { name: '通关', icon: '🏆', desc: '完成当前世界的最终挑战', cls: 'talk', label: '🏆 通关' }
+};
+const WORLDS = {
+  zombie:  { name: '丧尸围城', icon: '🧟', desc: '丧尸横行的末世废土，危机四伏', color: '#666', totalStages: 12, difficulty: 'D', stats: { hp: 120, atk: 15, def: 10, spd: 8, mp: 30 }, talentPool: ['hunger','nightVision','berserker'], bgImage: 'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)' },
+  xianxia: { name: '仙侠大陆', icon: '🧙', desc: '修仙者的奇幻世界，道法无边', color: '#8B5CF6', totalStages: 12, difficulty: 'C', stats: { hp: 100, atk: 18, def: 8, spd: 12, mp: 60 }, talentPool: ['swordQi','alchemy','formation'], bgImage: 'linear-gradient(135deg,#2d1b69,#11998e)' },
+  scifi:   { name: '星际殖民', icon: '🚀', desc: '人类文明的星际远征，未知星域等待探索', color: '#0EA5E9', totalStages: 13, difficulty: 'B', stats: { hp: 110, atk: 16, def: 9, spd: 11, mp: 50 }, talentPool: ['hacking','nanotech','fieldMedic'], bgImage: 'linear-gradient(135deg,#0c0c1d,#1a237e,#00bcd4)' },
+  cyber:   { name: '赛博朋克', icon: '🌃', desc: '霓虹闪烁的赛博都市，暗流涌动', color: '#F43F5E', totalStages: 14, difficulty: 'A', stats: { hp: 90, atk: 20, def: 7, spd: 14, mp: 45 }, talentPool: ['cybernetics','dataSteal','streetFight'], bgImage: 'linear-gradient(135deg,#0a0a1a,#1a0a2e,#ff006e)' }
+};
+const stages = {
+    zombie_intro: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 0,
+    name: '重返丧尸世界',
+    story: `白光散去，你再次站在了那条破败的街道上......<span class="system">【丧尸围城 · 难度D级 · 共12关】</span>`,
+    spirit: '欢迎回来~小心丧尸哦！',
+    choices: [{ type: 'main', text: '开始探索', nextStage: 'zombie_1' }]
+},
+    intro: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 0,
+    name: '虚无空间',
+    story: `<span class="system">【检测到宿主灵魂契合度 98.7%】</span>
+<span class="system">【绑定完成 · 欢迎使用「万界通行」系统】</span>
+
+<span class="highlight">林夜</span>睁开眼，发现自己站在一片<span class="highlight">纯白的虚无</span>之中。
+
+没有天空，没有大地，只有无尽的白色。
+
+"这是......哪里？"
+
+一个<span class="highlight">光球</span>在他面前凝聚，绕着他转了一圈。
+
+<span class="system">「我是零号，万界通行的系统精灵。」</span>
+
+"哈喽~从现在起，你将穿越不同世界执行任务。完成任务获得奖励，<span class="success">变得更强</span>！"
+
+零号飘到林夜面前：
+
+"每个世界有<span class="highlight">10-20个关卡</span>。天灾、人祸、丧尸、妖兽......各种世界等着你。"
+
+"准备好了吗？"
+
+<span class="system">【首个世界生成中...】</span>
+<span class="system">【世界：丧尸围城 · 共12关 · 难度D级】</span>`,
+    spirit: '第一个世界是新手教程，但也要小心哦~',
+    choices: [{ type: 'main', text: '深吸一口气，准备开始', nextStage: 'zombie_1' }]
+},
+    zombie_1: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 1,
+    name: '废墟街道', drawTalent: true, talentRank: 'D',
+    story: `白光消散。
+
+林夜站在一条<span class="danger">破败的街道</span>上。
+
+废弃的汽车横七竖八，商店橱窗碎裂，空气中弥漫着<span class="danger">腐烂</span>的气味。
+
+远处，一个<span class="danger">丧尸</span>正朝他扑来——
+
+<span class="system">【天赋已匹配：战斗型】</span>
+<span class="system">【天赋等级：D级】</span>`,
+    choices: [
+        { type: 'main', text: '逃跑，寻找藏身处', nextStage: 'zombie_1_run' },
+        { type: 'branch', text: '迎战！', nextStage: 'zombie_1_fight', battle: 'zombie' }
+    ]
+},
+    zombie_1_run: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 1,
+    name: '仓皇逃离',
+    story: `林夜转身就跑，丧尸紧追不舍。
+
+他冲进一条小巷，看到一家<span class="highlight">便利店</span>——撞进去、关门！
+
+丧尸在外面嘶吼撞击，但很快失去了兴趣。
+
+<span class="success">暂时安全了。</span>
+
+<span class="system">【获得物品：生锈铁棍】</span>
+<span class="system">【攻击力 +5】</span>`,
+    item: { icon: '🔧', name: '生锈铁棍', desc: '攻击力+5' },
+    choices: [{ type: 'main', text: '搜索便利店', nextStage: 'zombie_2' }]
+},
+    zombie_1_fight: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 1,
+    name: '首次战斗', beforeBattle: true, battleEnemy: 'zombie',
+    story: `林夜握紧拳头——天赋的力量在体内涌动！时间仿佛<span class="highlight">慢了下来</span>......`
+},
+    zombie_2: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 2,
+    name: '探索与抉择',
+    story: `<span class="system">【第2关 · 探索与抉择】</span>
+
+林夜小心翼翼地探索这座死城。
+
+街道上传来<span class="danger">尖叫声</span>——有人遇袭了！
+
+同时，路边有一辆<span class="highlight">还能开的车</span>。
+
+<span class="system">【关键选择：影响后续剧情】</span>`,
+    choices: [
+        { type: 'main', text: '冲向尖叫声的方向救人', nextStage: 'zombie_2_rescue', battle: 'runnerZombie' },
+        { type: 'branch', text: '悄悄绕开，独自求生', nextStage: 'zombie_2_alone' },
+        { type: 'branch', text: '开车离开，去安全的地方', nextStage: 'zombie_2_drive' }
+    ]
+},
+    zombie_2_rescue: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 2,
+    name: '营救行动',
+    story: `林夜冲向尖叫声——两个<span class="danger">奔跑丧尸</span>正在围堵一个<span class="highlight">年轻女孩</span>。
+
+他捡起铁管冲了进去——`,
+    beforeBattle: true, battleEnemy: 'runnerZombie'
+},
+    zombie_2_alone: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 2,
+    name: '冷酷之路',
+    story: `林夜转身离开。
+
+身后传来尖叫和撕咬声，他没有回头。
+
+零号沉默了一会儿："......理性选择。"
+
+<span class="system">【命运线偏移：冷酷】</span>
+<span class="system">【经验值 +15】</span>`,
+    expGain: 15,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'zombie_3' }]
+},
+    zombie_2_drive: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 2,
+    name: '驾车逃离',
+    story: `林夜找到一辆钥匙还在的车，发动引擎冲破包围。
+
+<span class="success">成功逃离！</span>
+
+<span class="system">【发现新区域：废弃医院】</span>
+<span class="system">【经验值 +10】</span>`,
+    expGain: 10,
+    choices: [{ type: 'main', text: '前往废弃医院', nextStage: 'zombie_3' }]
+},
+    zombie_3: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 3,
+    name: '废弃医院',
+    story: `<span class="system">【第3关 · 废弃医院】</span>
+
+林夜来到<span class="danger">废弃医院</span>。
+
+零号扫描发现：<span class="highlight">地下室有医疗物资</span>，但大厅里有<span class="danger">大型丧尸</span>。`,
+    choices: [
+        { type: 'main', text: '偷偷潜入地下室', nextStage: 'zombie_3_basement' },
+        { type: 'branch', text: '正面突破，杀出一条路', nextStage: 'zombie_3_fight', battle: 'bruteZombie' },
+        { type: 'branch', text: '寻找其他入口', nextStage: 'zombie_3_alt' }
+    ]
+},
+    zombie_3_basement: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 3,
+    name: '地下室探索',
+    story: `林夜悄悄潜入地下室，找到大量<span class="success">医疗物资</span>。
+
+<span class="system">【获得：急救包 x3】</span>
+<span class="system">【获得：医用匕首 (+8攻击)】</span>
+<span class="system">【获得：强化药剂 (+20最大生命)】</span>
+<span class="system">【经验值 +30】</span>`,
+    expGain: 30, item: { icon: '💉', name: '强化药剂', desc: '最大生命+20' },
+    choices: [{ type: 'main', text: '继续深入', nextStage: 'zombie_4' }]
+},
+    zombie_3_alt: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 3,
+    name: '通风管道',
+    story: `林夜找到通风管道入口，悄悄绕过大型丧尸。
+
+<span class="success">成功潜入药房！</span>`,
+    choices: [{ type: 'main', text: '搜刮药品', nextStage: 'zombie_3_basement' }]
+},
+    zombie_4: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 4,
+    name: '结伴同行',
+    story: `<span class="system">【第4关 · 结伴同行】</span>
+
+在医院屋顶，林夜遇到一个<span class="highlight">持枪的男人</span>——自称<span class="highlight">赵铁</span>，前军人。
+
+"我知道一个避难所位置，但路上很危险。"
+
+零号提示："有同伴战斗更容易，但也要保护他的安全。"`,
+    choices: [
+        { type: 'main', text: '接受赵铁的提议，一起行动', nextStage: 'zombie_4_join' },
+        { type: 'branch', text: '婉拒，独自行动', nextStage: 'zombie_4_alone' }
+    ]
+},
+    zombie_4_join: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 4,
+    name: '同行',
+    story: `"好，我们一起走。"
+
+赵铁点头："我叫赵铁，相信我，我能带你们到安全的地方。"
+
+<span class="system">【获得伙伴：赵铁（协同加成：攻击力+5）】</span>`,
+    choices: [{ type: 'main', text: '出发前往避难所', nextStage: 'zombie_5' }]
+},
+    zombie_4_alone: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 4,
+    name: '独行',
+    story: `"谢谢，但我习惯一个人。"
+
+赵铁没有勉强："小心点，这城市里不止有丧尸。"
+
+<span class="system">【命运线：独狼】</span>
+<span class="system">【获得道具：夜视仪】</span>`,
+    item: { icon: '🔦', name: '夜视仪', desc: '黑暗中也能看清敌人' },
+    choices: [{ type: 'main', text: '继续探索', nextStage: 'zombie_5' }]
+},
+    zombie_5: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 5,
+    name: '丧尸潮', drawTalent: true, talentRank: 'C',
+    story: `<span class="system">【第5关 · 丧尸潮】</span>
+
+夜幕降临，丧尸变得<span class="danger">异常活跃</span>。
+
+远处传来震耳欲聋的嘶吼——<span class="danger">丧尸潮</span>来袭！
+
+零号急切："必须在天亮前找到掩体！"`,
+    choices: [
+        { type: 'main', text: '冲向最近的建筑躲避', nextStage: 'zombie_5_building' },
+        { type: 'branch', text: '设置陷阱，击杀丧尸', nextStage: 'zombie_5_trap', battle: 'bruteZombie' },
+        { type: 'branch', text: '跑向制高点观察', nextStage: 'zombie_5_rooftop' }
+    ]
+},
+    zombie_5_building: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 5,
+    name: '建筑内',
+    story: `林夜冲进公寓楼，封堵入口。
+
+丧尸潮在外面嘶吼，但无法进入。
+
+<span class="success">成功躲过丧尸潮！</span>
+<span class="system">【经验值 +40】</span>`,
+    expGain: 40,
+    choices: [{ type: 'main', text: '休息后继续', nextStage: 'zombie_6' }]
+},
+    zombie_5_trap: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 5,
+    name: '诱敌',
+    story: `林夜设置路障引诱丧尸——
+
+但这次来的是<span class="danger">巨型丧尸</span>！`,
+    beforeBattle: true, battleEnemy: 'bruteZombie'
+},
+    zombie_5_rooftop: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 5,
+    name: '制高点',
+    story: `从屋顶看去，整个城市陷入<span class="danger">火海</span>般的混乱。
+
+但他也发现：<span class="highlight">城北军事基地</span>还有灯光！
+
+<span class="system">【发现目标：军事基地】</span>`,
+    choices: [{ type: 'main', text: '前往军事基地', nextStage: 'zombie_6' }]
+},
+    zombie_6: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 6,
+    name: '地下通道',
+    story: `<span class="system">【第6关 · 地下通道】</span>
+
+林夜进入城市<span class="highlight">地下通道</span>。
+
+但这里被<span class="danger">堕落者</span>占据——保留理智但已感染的<span class="danger">可怕存在</span>。
+
+零号警告："这些家伙比丧尸更危险！"`,
+    choices: [
+        { type: 'main', text: '正面交战', nextStage: 'zombie_6_fight', battle: 'survivor' },
+        { type: 'branch', text: '悄悄绕路', nextStage: 'zombie_6_sneak' }
+    ]
+},
+    zombie_6_fight: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 6,
+    name: '堕落者', beforeBattle: true, battleEnemy: 'survivor',
+    story: `一个<span class="danger">堕落者</span>拦住去路："又一个猎物......"`
+},
+    zombie_6_sneak: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 6,
+    name: '潜行',
+    story: `林夜悄悄绕过堕落者地盘——
+
+踢翻东西，<span class="danger">暴露了！</span>`,
+    choices: [{ type: 'main', text: '拼命逃跑', nextStage: 'zombie_6_escape' }]
+},
+    zombie_6_escape: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 6,
+    name: '逃脱',
+    story: `林夜拼命奔跑，甩掉了追兵。
+
+<span class="success">成功逃离地下通道！</span>
+<span class="system">【经验值 +25】</span>`,
+    expGain: 25,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'zombie_7' }]
+},
+    zombie_7: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 7,
+    name: '军事基地',
+    story: `<span class="system">【第7关 · 军事基地】</span>
+
+林夜来到<span class="highlight">军事基地</span>。
+
+高墙、铁丝网、巡逻士兵——这里还有幸存者。
+
+但士兵举起枪："站住！你是感染者吗？"`,
+    choices: [
+        { type: 'main', text: '表明身份，请求进入', nextStage: 'zombie_7_request' },
+        { type: 'branch', text: '保持距离，寻找其他入口', nextStage: 'zombie_7_sneak' },
+        { type: 'branch', text: '质问为何封锁基地', nextStage: 'zombie_7_confront' }
+    ]
+},
+    zombie_7_request: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 7,
+    name: '请求进入',
+    story: `"我是幸存者，不是感染者！"
+
+士兵犹豫后放下枪："先隔离观察24小时。"
+
+<span class="success">成功进入基地！</span>`,
+    choices: [{ type: 'main', text: '进入基地', nextStage: 'zombie_8' }]
+},
+    zombie_7_sneak: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 7,
+    name: '潜入',
+    story: `林夜找到排水口悄悄潜入。
+
+基地内部比外面<span class="danger">更加混乱</span>——有人在<span class="danger">内斗</span>！`,
+    choices: [{ type: 'main', text: '继续调查', nextStage: 'zombie_8' }]
+},
+    zombie_7_confront: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 7,
+    name: '对峙',
+    story: `"你们封锁这里，是想让外面的人都死吗？"
+
+士兵低声说："你以为我们想？上面的人......<span class="danger">已经有问题了</span>。"
+
+<span class="system">【获得情报：基地高层异常】</span>`,
+    choices: [{ type: 'main', text: '了解更多', nextStage: 'zombie_8' }]
+},
+    zombie_8: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 8,
+    name: '基地内乱',
+    story: `<span class="system">【第8关 · 基地内乱】</span>
+
+基地内部一片混乱——<span class="danger">叛乱分子</span>正在袭击总部！
+
+<span class="system">【遭遇战：基地叛乱分子】</span>`,
+    choices: [
+        { type: 'main', text: '帮助守军镇压叛乱', nextStage: 'zombie_8_help', battle: 'survivor' },
+        { type: 'branch', text: '趁机抢夺物资逃走', nextStage: 'zombie_8_steal' },
+        { type: 'branch', text: '保持中立，寻找其他出路', nextStage: 'zombie_8_neutral' }
+    ]
+},
+    zombie_8_help: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 8,
+    name: '平叛', beforeBattle: true, battleEnemy: 'survivor',
+    story: `林夜协助守军作战！`
+},
+    zombie_8_steal: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 8,
+    name: '趁火打劫',
+    story: `趁乱抢夺物资后逃跑。
+
+<span class="danger">但你被守军记住了......</span>
+<span class="system">【命运线偏移：贪婪】</span>`,
+    choices: [{ type: 'main', text: '继续逃跑', nextStage: 'zombie_9' }]
+},
+    zombie_8_neutral: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 8,
+    name: '中立',
+    story: `林夜悄悄离开，不参与双方的战斗。
+
+<span class="system">【命运线：独立】</span>`,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'zombie_9' }]
+},
+    zombie_9: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 9,
+    name: '真相', drawTalent: true, talentRank: 'B',
+    story: `<span class="system">【第9关 · 真相】</span>
+
+在基地深处，林夜发现了一个<span class="danger">秘密实验室</span>。
+
+文件揭示了<span class="danger">惊人真相</span>：这场灾难是<span class="danger">人为制造的</span>！
+
+零号沉默了一会儿："这就是万界的<span class="highlight">真相之一</span>。"
+
+<span class="system">【解锁主线剧情碎片】</span>`,
+    choices: [{ type: 'main', text: '继续深入调查', nextStage: 'zombie_10' }]
+},
+    zombie_10: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 10,
+    name: '变异体',
+    story: `<span class="system">【第10关 · 变异体】</span>
+
+实验室深处传来<span class="danger">震颤</span>。
+
+一个<span class="danger">变异丧尸</span>从培养槽中苏醒——实验的产物！
+
+<span class="system">【精英战斗：变异丧尸】</span>`,
+    choices: [
+        { type: 'main', text: '迎战！', nextStage: 'zombie_10_fight', battle: 'mutantZombie' },
+        { type: 'branch', text: '逃跑，炸掉实验室', nextStage: 'zombie_10_run' }
+    ]
+},
+    zombie_10_fight: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 10,
+    name: '决战变异体', beforeBattle: true, battleEnemy: 'mutantZombie',
+    story: `变异丧尸发出刺耳咆哮，朝林夜扑来——`
+},
+    zombie_10_run: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 10,
+    name: '撤离',
+    story: `林夜引爆实验室化学储藏罐。
+
+爆炸声中，变异丧尸被消灭。
+
+<span class="system">【经验值 +35】</span>`,
+    expGain: 35,
+    choices: [{ type: 'main', text: '撤离基地', nextStage: 'zombie_11' }]
+},
+    zombie_11: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 11,
+    name: '撤离',
+    story: `<span class="system">【第11关 · 撤离】</span>
+
+基地暴露在丧尸潮中，必须<span class="danger">撤离</span>！
+
+林夜和其他幸存者向外突围——
+
+但<span class="danger">丧尸领主</span>出现在前方！整个城市丧尸的<span class="danger">主宰</span>！
+
+<span class="system">【BOSS战：丧尸领主】</span>`,
+    choices: [{ type: 'main', text: '迎战丧尸领主！', nextStage: 'zombie_11_fight', battle: 'bossZombie' }]
+},
+    zombie_11_fight: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 11,
+    name: '决战领主', beforeBattle: true, battleEnemy: 'bossZombie',
+    story: `丧尸领主高达三米，浑身肌肉扭曲，眼中燃烧着<span class="danger">毁灭之火</span>。
+
+"又是......一个......猎物。"`,
+    choices: [{ type: 'main', text: '继续', nextStage: 'zombie_12' }]
+},
+    zombie_12: {
+    world: 'zombie', worldName: '丧尸围城', stageNum: 12,
+    name: '世界通关', isClear: true,
+    story: `<span class="success">【丧尸领主被击败！】</span>
+
+林夜站在废墟之中，大口喘息。
+
+零号欢快地说："恭喜宿主！<span class="success">丧尸围城世界通关！</span>"
+
+<span class="system">【获得奖励：通行币 x500】</span>
+<span class="system">【获得奖励：永久属性 +10】</span>
+<span class="system">【解锁新世界：仙侠大陆】</span>
+
+白光再次笼罩林夜——新的冒险即将开始......`,
+    expGain: 200,
+    onComplete: () => { gameState.maxHp += 10; gameState.atk += 5; gameState.def += 3; gameState.spd += 2; gameState.hp = gameState.maxHp; },
+    choices: [{ type: 'main', text: '进入仙侠大陆', nextStage: 'xianxia_intro' }]
+},
+    xianxia_intro: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 0,
+    name: '仙门初开',
+    story: `<span class="system">【世界切换中...】</span>
+<span class="system">【新世界：仙侠大陆 · 共12关 · 难度C级】</span>
+
+白光散去，林夜站在一座<span class="highlight">云雾缭绕的山峰</span>上。
+
+远处琼楼玉宇，仙鹤飞舞——这里是<span class="highlight">修仙界</span>！
+
+零号兴奋："宿主，这里可以修炼成仙哦！但同样危机四伏。"
+
+<span class="system">【欢迎来到仙侠大陆】</span>`,
+    spirit: '仙侠世界更危险，但也更强！加油~',
+    choices: [{ type: 'main', text: '下山探索', nextStage: 'xianxia_1' }]
+},
+    xianxia_1: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 1,
+    name: '山门初开', drawTalent: true, talentRank: 'D',
+    story: `<span class="system">【第1关 · 山门初开】</span>
+
+林夜沿着山路下山，看到一座<span class="highlight">修仙门派</span>的牌坊——<span class="highlight">「青云宗」</span>。
+
+门口弟子警惕地打量着陌生人。
+
+零号说："加入门派可以学习功法，但也有规矩要遵守。"`,
+    choices: [
+        { type: 'main', text: '上前请求拜入门下', nextStage: 'xianxia_1_join' },
+        { type: 'branch', text: '悄悄绕开，另寻机缘', nextStage: 'xianxia_1_sneak' },
+        { type: 'branch', text: '观察门派情况', nextStage: 'xianxia_1_observe' }
+    ]
+},
+    xianxia_1_join: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 1,
+    name: '拜入山门',
+    story: `"在下林夜，愿求仙道，愿入贵派修行。"
+
+守门弟子打量后："资质不错，跟我来。"
+
+<span class="success">成功拜入青云宗！</span>
+<span class="system">【获得：青云宗入门弟子身份】</span>
+<span class="system">【获得：基础功法《青云心法》】</span>`,
+    choices: [{ type: 'main', text: '开始修炼', nextStage: 'xianxia_2' }]
+},
+    xianxia_1_sneak: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 1,
+    name: '另寻机缘',
+    story: `林夜悄悄绕开青云宗，发现一处<span class="highlight">灵气充沛的洞府</span>。
+
+<span class="system">【发现：《天剑诀》残篇】</span>
+<span class="system">【攻击力永久+5】</span>`,
+    choices: [{ type: 'main', text: '继续探索', nextStage: 'xianxia_2' }]
+},
+    xianxia_1_observe: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 1,
+    name: '观察',
+    story: `林夜暗中观察。
+
+他发现青云宗内部<span class="danger">似乎有矛盾</span>——两派弟子在对峙。
+
+零号提醒："有时候旁观也是一种智慧。"`,
+    choices: [{ type: 'main', text: '继续观察', nextStage: 'xianxia_1_observe2' }, { type: 'branch', text: '还是进去吧', nextStage: 'xianxia_1_join' }]
+},
+    xianxia_1_observe2: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 1,
+    name: '目睹冲突',
+    story: `两派弟子<span class="danger">大打出手</span>！
+
+原来是<span class="danger">魔修</span>混入了门派，正在窃取功法秘籍！
+
+<span class="system">【发现：魔修入侵】</span>`,
+    choices: [{ type: 'main', text: '出手干预', nextStage: 'xianxia_2_fight', battle: 'cultist' }, { type: 'branch', text: '趁机溜走', nextStage: 'xianxia_2' }]
+},
+    xianxia_2: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 2,
+    name: '藏经阁',
+    story: `<span class="system">【第2关 · 藏经阁】</span>
+
+林夜进入青云宗<span class="highlight">藏经阁</span>。
+
+零号扫描：<span class="highlight">顶层有高级功法</span>，但需要通过考验。
+
+<span class="system">【考验：守护剑灵】</span>`,
+    choices: [
+        { type: 'main', text: '挑战守护剑灵', nextStage: 'xianxia_2_trial', battle: 'swordGhost' },
+        { type: 'branch', text: '先在低层学习基础功法', nextStage: 'xianxia_2_basics' }
+    ]
+},
+    xianxia_2_trial: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 2,
+    name: '剑灵考验', beforeBattle: true, battleEnemy: 'swordGhost',
+    story: `守护剑灵现身！一把<span class="highlight">剑</span>悬浮空中，散发出凌厉剑意——`
+},
+    xianxia_2_basics: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 2,
+    name: '基础修炼',
+    story: `林夜认真学习基础功法。
+
+<span class="system">【防御力永久+3】</span>
+<span class="system">【经验值 +25】</span>`,
+    expGain: 25,
+    choices: [{ type: 'main', text: '继续修炼', nextStage: 'xianxia_3' }]
+},
+    xianxia_3: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 3,
+    name: '宗门大比',
+    story: `<span class="system">【第3关 · 宗门大比】</span>
+
+青云宗举行<span class="highlight">年度大比</span>。
+
+获胜者可以获得<span class="success">珍贵丹药</span>和<span class="success">高级功法</span>。
+
+零号："这是展示实力、获取资源的好机会！"`,
+    choices: [
+        { type: 'main', text: '参加大比，争取胜利', nextStage: 'xianxia_3_enter' },
+        { type: 'branch', text: '观战学习，稳扎稳打', nextStage: 'xianxia_3_watch' }
+    ]
+},
+    xianxia_3_enter: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 3,
+    name: '参赛', beforeBattle: true, battleEnemy: 'cultist',
+    story: `林夜报名参赛。
+
+第一轮对手是一个<span class="danger">魔修弟子</span>——居然是混入门派的内鬼！`
+},
+    xianxia_3_watch: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 3,
+    name: '观战',
+    story: `林夜仔细观察其他弟子的战斗。
+
+<span class="system">【战斗经验 +30】</span>
+<span class="system">【解锁被动：洞察】</span>`,
+    expGain: 30,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'xianxia_4' }]
+},
+    xianxia_4: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 4,
+    name: '魔修来袭',
+    story: `<span class="system">【第4关 · 魔修来袭】</span>
+
+宗门大比期间，<span class="danger">魔修势力</span>突然袭击！
+
+无数<span class="danger">魔修弟子</span>从四面八方涌来。
+
+"青云宗，今日必灭！"`,
+    choices: [
+        { type: 'main', text: '协助宗门抵御外敌', nextStage: 'xianxia_4_defend', battle: 'elderCultist' },
+        { type: 'branch', text: '趁乱调查魔修目的', nextStage: 'xianxia_4_investigate' }
+    ]
+},
+    xianxia_4_defend: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 4,
+    name: '守护宗门', beforeBattle: true, battleEnemy: 'elderCultist',
+    story: `林夜挡在魔修面前："想动青云宗，先过我这关！"`
+},
+    xianxia_4_investigate: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 4,
+    name: '调查',
+    story: `林夜悄悄跟踪魔修队伍。
+
+他们直奔<span class="highlight">青云宗禁地</span>——那里藏着秘密！
+
+<span class="system">【发现：禁地入口】</span>`,
+    choices: [{ type: 'main', text: '进入禁地', nextStage: 'xianxia_5' }]
+},
+    xianxia_5: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 5,
+    name: '禁地探秘', drawTalent: true, talentRank: 'B',
+    story: `<span class="system">【第5关 · 禁地探秘】</span>
+
+青云宗禁地中，林夜发现了<span class="highlight">惊天秘密</span>——
+
+封印着一个<span class="danger">上古魔物</span>！
+
+魔修们的目的就是<span class="danger">释放它</span>！
+
+零号急切："宿主，必须阻止他们！"`,
+    choices: [
+        { type: 'main', text: '阻止魔修解封', nextStage: 'xianxia_5_stop', battle: 'demonBeast' },
+        { type: 'branch', text: '先通知宗门长老', nextStage: 'xianxia_5_report' }
+    ]
+},
+    xianxia_5_stop: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 5,
+    name: '阻止', beforeBattle: true, battleEnemy: 'demonBeast',
+    story: `林夜与守护封印的<span class="danger">妖兽</span>激战——`
+},
+    xianxia_5_report: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 5,
+    name: '报告',
+    story: `林夜找到长老汇报。
+
+长老却说他们<span class="danger">早就知道</span>......
+
+"我们封印的不只是魔物，还有......<span class="highlight">成仙的秘密</span>。"
+
+<span class="system">【解锁主线剧情】</span>`,
+    choices: [{ type: 'main', text: '追问真相', nextStage: 'xianxia_6' }]
+},
+    xianxia_6: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 6,
+    name: '成仙之秘',
+    story: `<span class="system">【第6关 · 成仙之秘】</span>
+
+长老告诉林夜一个<span class="highlight">震撼的真相</span>：
+
+"所谓成仙，不过是<span class="danger">另一条路的起点</span>。"
+
+"这个世界......是被创造出来的。"
+
+零号沉默不语，但林夜感觉到她在思考。
+
+<span class="system">【剧情推进】</span>`,
+    choices: [{ type: 'main', text: '继续追问', nextStage: 'xianxia_7' }]
+},
+    xianxia_7: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 7,
+    name: '内奸',
+    story: `<span class="system">【第7关 · 内奸】</span>
+
+宗门内部出现<span class="danger">叛徒</span>！
+
+魔修能够潜入，是因为有人<span class="danger">里应外合</span>。
+
+林夜必须找出内奸！`,
+    choices: [
+        { type: 'main', text: '调查最近行为异常的弟子', nextStage: 'xianxia_7_suspect' },
+        { type: 'branch', text: '暗中观察长老们的动向', nextStage: 'xianxia_7_elder' },
+        { type: 'branch', text: '直接质问掌门', nextStage: 'xianxia_7_master' }
+    ]
+},
+    xianxia_7_suspect: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 7,
+    name: '嫌疑人',
+    story: `林夜发现<span class="danger">副掌门</span>行为异常。
+
+他与魔修势力<span class="danger">早有勾结</span>！
+
+<span class="system">【发现：副掌门是内奸】</span>`,
+    choices: [{ type: 'main', text: '揭露真相', nextStage: 'xianxia_8' }]
+},
+    xianxia_7_elder: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 7,
+    name: '暗查',
+    story: `林夜发现<span class="danger">大长老</span>才是幕后黑手。
+
+他一直想要释放魔物，获取<span class="highlight">上古力量</span>。
+
+<span class="system">【发现：大长老是幕后黑手】</span>`,
+    choices: [{ type: 'main', text: '揭露真相', nextStage: 'xianxia_8' }]
+},
+    xianxia_7_master: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 7,
+    name: '质问',
+    story: `林夜直接质问掌门。
+
+掌门大怒，但眼中有一丝<span class="highlight">愧疚</span>......
+
+原来掌门<span class="danger">被迫的</span>，家人被魔修挟持。
+
+<span class="system">【发现：掌门的苦衷】</span>`,
+    choices: [{ type: 'main', text: '帮助掌门', nextStage: 'xianxia_8' }]
+},
+    xianxia_8: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 8,
+    name: '真相大白',
+    story: `<span class="system">【第8关 · 真相大白】</span>
+
+林夜揭露真相，宗门陷入<span class="danger">混乱</span>。
+
+内奸狗急跳墙，强行解开封印！
+
+一道<span class="danger">黑气</span>冲天而起——魔物即将苏醒！
+
+<span class="system">【紧急战斗！】</span>`,
+    choices: [{ type: 'main', text: '阻止封印解除', nextStage: 'xianxia_8_fight', battle: 'demonLord' }]
+},
+    xianxia_8_fight: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 8,
+    name: '魔道宗主', beforeBattle: true, battleEnemy: 'demonLord',
+    story: `<span class="danger">魔道宗主</span>现身！
+
+"哈哈哈......你们的挣扎毫无意义！"`
+},
+    xianxia_9: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 9,
+    name: '绝境', drawTalent: true, talentRank: 'A',
+    story: `<span class="system">【第9关 · 绝境】</span>
+
+林夜被魔道宗主<span class="danger">重伤</span>。
+
+零号在脑海中呼喊："宿主！还有办法！"
+
+<span class="highlight">万界通行系统</span>正在提供最后的力量......
+
+<span class="system">【触发：系统觉醒】</span>`,
+    choices: [{ type: 'main', text: '接受系统力量', nextStage: 'xianxia_9_power' }]
+},
+    xianxia_9_power: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 9,
+    name: '觉醒',
+    story: `林夜体内爆发出<span class="highlight">璀璨光芒</span>！
+
+气息瞬间暴涨，达到<span class="highlight">元婴境</span>！
+
+"什么？！"魔道宗主大惊失色。
+
+<span class="system">【突破成功！全属性大幅提升！】</span>`,
+    onComplete: () => { gameState.maxHp += 30; gameState.atk += 15; gameState.def += 10; gameState.spd += 8; gameState.hp = gameState.maxHp; },
+    choices: [{ type: 'main', text: '反击！', nextStage: 'xianxia_10' }]
+},
+    xianxia_10: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 10,
+    name: '决战',
+    story: `<span class="system">【第10关 · 决战】</span>
+
+林夜与魔道宗主的决战！
+
+整个修仙界都在震动，无数高手前来观战。
+
+<span class="system">【最终决战】</span>`,
+    choices: [{ type: 'main', text: '全力一战！', nextStage: 'xianxia_10_fight', battle: 'demonLord' }]
+},
+    xianxia_10_fight: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 10,
+    name: '命运之战', beforeBattle: true, battleEnemy: 'demonLord',
+    story: `林夜与魔道宗主展开<span class="highlight">命运之战</span>——`
+},
+    xianxia_11: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 11,
+    name: '封印魔物',
+    story: `<span class="system">【第11关 · 封印魔物】</span>
+
+魔道宗主虽然败退，但<span class="danger">魔物</span>已开始苏醒！
+
+林夜必须用尽全力再次封印它。
+
+这是他成仙路上的<span class="highlight">最后考验</span>！
+<span class="system">【封印之战】</span>`,
+    choices: [{ type: 'main', text: '封印魔物！', nextStage: 'xianxia_11_seal', battle: 'demonLord' }]
+},
+    xianxia_11_seal: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 11,
+    name: '封印之战', beforeBattle: true, battleEnemy: 'demonLord',
+    story: `魔物的本体与林夜正面对决——`
+},
+    xianxia_12: {
+    world: 'xianxia', worldName: '仙侠大陆', stageNum: 12,
+    name: '飞升之劫', isClear: true, story: `<span class="success">【魔物被成功封印！】</span>
+
+随着魔物被重新封印，仙侠大陆恢复平静。
+
+林夜因功获封<span class="highlight">青云宗长老</span>之位。
+
+零号欢快地说："恭喜宿主！<span class="success">仙侠大陆通关！</span>"
+
+<span class="system">【获得奖励：通行币 x1000】</span>
+<span class="system">【获得奖励：《青云飞升诀》】</span>
+<span class="system">【永久属性大幅提升】</span>
+<span class="system">【解锁成就：万界行者】</span>
+
+白光再次笼罩林夜——但这次，他感受到了<span class="highlight">回家的力量</span>。
+
+<span class="success">【恭喜通关全部世界！】</span>`,
+    onComplete: () => { gameState.maxHp += 50; gameState.atk += 20; gameState.def += 15; gameState.spd += 12; gameState.hp = gameState.maxHp; gameState.level += 3; },
+    choices: [{ type: 'main', text: '返回虚无空间', nextStage: 'ending' }]
+},
+    scifi_intro: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 0,
+    name: '星际跃迁',
+    story: `<span class="system">【世界切换中...】</span>
+<span class="system">【新世界：星际殖民 · 共13关 · 难度B级】</span>
+
+白光散去，林夜发现自己站在一艘<span class="highlight">巨大的星际飞船</span>上。
+
+舷窗外是无尽的星海，远处一颗<span class="highlight">蓝绿色星球</span>缓缓旋转。
+
+零号兴奋地说："这是人类文明的殖民地！但这里也有危险——外星生物、太空海盗......"
+
+<span class="system">【欢迎来到星际殖民世界】</span>`,
+    spirit: '星际世界有丰富的科技可以探索哦~',
+    choices: [{ type: 'main', text: '开始探索', nextStage: 'scifi_1' }]
+},
+    scifi_1: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 1,
+    name: '海盗交火', drawTalent: true, talentRank: 'C',
+    story: `警报响起！一艘<span class="danger">海盗飞船</span>正在逼近！
+
+舰长喊道："所有人战斗准备！"
+
+零号提示："星际世界的敌人比丧尸更强，小心！"`,
+
+    choices: [
+        { type: 'main', text: '迎战海盗！', nextStage: 'scifi_1_fight', battle: 'scifi' },
+        { type: 'branch', text: '启动护盾防御', nextStage: 'scifi_1_shield' }
+    ]
+},
+    scifi_1_fight: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 1,
+    name: '太空战斗', beforeBattle: true, battleEnemy: 'scifi',
+    story: `林夜冲向武器控制台，激光炮开始充能——`
+},
+    scifi_1_shield: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 1,
+    name: '护盾防御',
+    story: `护盾成功抵挡了海盗的第一波攻击。
+
+<span class="success">海盗暂时撤退了。</span>
+<span class="system">【经验值 +20】</span>`,
+    expGain: 20,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'scifi_2' }]
+},
+    scifi_2: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 2,
+    name: '导航修复',
+    story: `<span class="system">【第2关 · 导航修复】</span>
+
+飞船导航系统出现故障，必须手动修复星图路线。`,
+    puzzle: { type: 'riddle', index: 0 },
+    puzzleSuccess: '<span class="success">导航系统修复成功！</span>',
+    expGain: 25,
+    choices: [{ type: 'main', text: '前往空间站', nextStage: 'scifi_3' }]
+},
+    scifi_3: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 3,
+    name: '太空站攻防',
+    story: `<span class="system">【第3关 · 太空站攻防】</span>
+
+抵达太空站，但<span class="danger">防御系统被攻破</span>，敌人正在涌入！
+
+<span class="system">【遭遇战：外星生物】</span>`,
+    choices: [
+        { type: 'main', text: '协助防守', nextStage: 'scifi_3_fight', battle: 'scifi' },
+        { type: 'branch', text: '撤退到安全区', nextStage: 'scifi_4' }
+    ]
+},
+    scifi_3_fight: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 3,
+    name: '太空站战斗', beforeBattle: true, battleEnemy: 'scifi',
+    story: `林夜拿起等离子步枪投入战斗！`
+},
+    scifi_4: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 4,
+    name: '物资搜集',
+    story: `<span class="system">【第4关 · 物资搜集】</span>
+
+废弃空间站内可能还有有用的物资。
+
+<span class="system">【搜索物资，小心陷阱！】</span>`,
+    search: { total: 16, targets: 4, traps: 3 },
+    searchItem: { icon: '📦', name: '太空物资', desc: '有用的星际物资' },
+    searchSuccess: '<span class="success">收集完毕！获得太空物资！</span>',
+    expGain: 30,
+    choices: [{ type: 'main', text: '继续探索', nextStage: 'scifi_5' }]
+},
+    scifi_5: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 5,
+    name: '量子密码', drawTalent: true, talentRank: 'B',
+    story: `<span class="system">【第5关 · 量子密码破译】</span>
+
+控制台上是一组量子加密的密码，需要破解才能启动系统。`,
+    puzzle: { type: 'riddle', index: 1 },
+    puzzleSuccess: '<span class="success">密码破译成功！系统启动！</span>',
+    expGain: 35,
+    choices: [{ type: 'main', text: '前往外星区域', nextStage: 'scifi_6' }]
+},
+    scifi_6: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 6,
+    name: '外星对话',
+    story: `<span class="system">【第6关 · 外星种族对话】</span>
+
+通讯频道中传来<span class="highlight">陌生的语言</span>，翻译器正在工作......
+
+一个外星生物出现在全息投影中。
+
+"我们是和平的种族。但黑暗正在靠近......"`,
+    choices: [
+        { type: 'main', text: '建立外交关系', nextStage: 'scifi_6_ally' },
+        { type: 'branch', text: '保持警惕', nextStage: 'scifi_6_wary' }
+    ]
+},
+    scifi_6_ally: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 6,
+    name: '结盟',
+    story: `外星种族同意结盟。
+
+<span class="success">获得外星盟友！攻击力+8</span>
+<span class="system">【经验值 +40】</span>`,
+    expGain: 40,
+    onComplete: () => { gameState.atk += 8; },
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'scifi_7' }]
+},
+    scifi_6_wary: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 6,
+    name: '警惕',
+    story: `林夜保持警惕，没有轻信外星生物。
+<span class="system">【命运线：谨慎】</span>
+<span class="system">【经验值 +30】</span>`,
+    expGain: 30,
+    choices: [{ type: 'main', text: '继续前进', nextStage: 'scifi_7' }]
+},
+    scifi_7: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 7,
+    name: '伤员撤离',
+    story: `<span class="system">【第7关 · 伤员撤离】</span>
+
+几名船员在爆炸中受伤，医疗舱需要紧急启用！
+
+<span class="system">【限时救治伤员！】</span>`,
+    rescue: { total: 5, required: 3, timeLimit: 30 },
+    rescueSuccess: '<span class="success">所有伤员已成功救治！</span>',
+    expGain: 45,
+    choices: [{ type: 'main', text: '深入敌方基地', nextStage: 'scifi_8' }]
+},
+    scifi_8: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 8,
+    name: '暗入母舰',
+    story: `<span class="system">【第8关 · 暗入母舰】</span>
+
+敌方基地布满了监控和巡逻无人机。
+
+<span class="system">【潜行模式：避免被发现！】</span>`,
+    stealth: { checks: 3, failEnemy: 'scifi' },
+    stealthSuccess: '<span class="success">成功潜入敌方母舰！</span>',
+    stealthFail: '<span class="danger">被发现！敌人大举进攻！</span>',
+    expGain: 50,
+    choices: [{ type: 'main', text: '深入核心区域', nextStage: 'scifi_9' }]
+},
+    scifi_9: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 9,
+    name: '氧气泄漏',
+    story: `<span class="system">【第9关 · 氧气泄漏】</span>
+
+舱壁出现裂口，氧气正在泄漏！
+
+<span class="system">【生存模式：坚持3波攻击！】</span>`,
+    survive: { waves: 3, enemies: ['scifi', 'scifi', 'scifi'] },
+    surviveSuccess: '<span class="success">泄漏修复完成！生存成功！</span>',
+    expGain: 55,
+    choices: [{ type: 'main', text: '前往虫族巢穴', nextStage: 'scifi_10' }]
+},
+    scifi_10: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 10,
+    name: '虫巢深处', drawTalent: true, talentRank: 'A',
+    story: `<span class="system">【第10关 · 虫巢深处】</span>
+
+林夜深入<span class="danger">虫族巢穴</span>，空气中弥漫着腥臭。
+
+零号警告："大量生物反应正在靠近！"
+
+<span class="system">【精英战斗：暗物质生物】</span>`,
+    choices: [
+        { type: 'main', text: '迎击！', nextStage: 'scifi_10_fight', battle: 'scifi' },
+        { type: 'branch', text: '设置陷阱', nextStage: 'scifi_10_trap' }
+    ]
+},
+    scifi_10_fight: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 10,
+    name: '虫巢战斗', beforeBattle: true, battleEnemy: 'scifi',
+    story: `暗物质生物从次元裂缝中涌出！`
+},
+    scifi_10_trap: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 10,
+    name: '陷阱',
+    story: `林夜设置了一系列能量陷阱。
+<span class="success">成功消灭了一波虫族！</span>
+<span class="system">【经验值 +45】</span>`,
+    expGain: 45,
+    choices: [{ type: 'main', text: '继续深入', nextStage: 'scifi_11' }]
+},
+    scifi_11: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 11,
+    name: '虫族女王',
+    story: `<span class="system">【第11关 · 虫族女王】</span>
+
+巢穴深处，一个<span class="danger">巨大的身影</span>缓缓升起——
+
+<span class="danger">虫族女王</span>！周围虫兵列阵！
+
+<span class="system">【BOSS战：虫族女王】</span>`,
+    choices: [
+        { type: 'main', text: '迎战虫族女王！', nextStage: 'scifi_11_fight', battle: 'scifi_boss' }
+    ]
+},
+    scifi_11_fight: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 11,
+    name: '决战女王', beforeBattle: true, battleEnemy: 'scifi_boss',
+    story: `虫族女王发出震耳欲聋的嘶吼！虫兵疯狂涌来！`
+},
+    scifi_12: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 12,
+    name: '星际远征',
+    story: `<span class="system">【第12关 · 星际远征】</span>
+
+虫族被击退，人类文明获得了新的生存空间。
+
+但林夜知道，更大的冒险还在前方。
+
+<span class="system">【获得奖励：通行币 x1500】</span>
+<span class="system">【获得奖励：永久属性 +15】</span>`,
+    expGain: 200,
+    onComplete: () => { gameState.maxHp += 15; gameState.atk += 8; gameState.def += 5; gameState.spd += 4; gameState.hp = gameState.maxHp; },
+    choices: [{ type: 'main', text: '继续探索', nextStage: 'scifi_13' }]
+},
+    scifi_13: {
+    world: 'scifi', worldName: '星际殖民', stageNum: 13,
+    name: '星图绘制完成', isClear: true, isEnding: true,
+    story: `<span class="success">【星际殖民世界通关！】</span>
+
+殖民地的穹顶缓缓开启，新星球的第一缕阳光照在所有人的脸上。
+
+人类文明的种子已经播撒在这片星海之中。
+
+<span class="system">【获得奖励：通行币 x2000】</span>
+<span class="system">【解锁新世界：赛博朋克】</span>`,
+    expGain: 300,
+    choices: [{ type: 'main', text: '返回系统空间', nextStage: 'ending' }]
+},
+    cyber_intro: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 0,
+    name: '霓虹初现',
+    story: `<span class="system">【世界切换中...】</span>
+<span class="system">【新世界：赛博朋克 · 共14关 · 难度A级】</span>
+
+白光散去。
+
+林夜站在一条<span class="highlight">霓虹闪烁</span>的街道上。
+
+全息广告在头顶浮动，飞行器在楼宇间穿梭，人们的身体上布满了<span class="highlight">金属义体</span>。
+
+零号低声说："这个世界......人和机器的界限已经模糊了。"
+
+<span class="system">【欢迎来到赛博朋克世界】</span>`,
+    spirit: '赛博世界节奏很快，小心被淘汰哦~',
+    choices: [{ type: 'main', text: '踏入霓虹之城', nextStage: 'cyber_1' }]
+},
+    cyber_1: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 1,
+    name: '企业保安', drawTalent: true, talentRank: 'C',
+    story: `<span class="system">【第1关 · 企业保安冲突】</span>
+
+林夜刚进入城市就被<span class="danger">企业保安</span>拦截。
+
+"这片区域已被封锁。你是什么人？"
+
+<span class="system">【遭遇战：赛博改造人】</span>`,
+    choices: [
+        { type: 'main', text: '战斗突围', nextStage: 'cyber_1_fight', battle: 'cyber' },
+        { type: 'branch', text: '使用黑客手段瘫痪系统', nextStage: 'cyber_1_hack' }
+    ]
+},
+    cyber_1_fight: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 1,
+    name: '突围', beforeBattle: true, battleEnemy: 'cyber',
+    story: `林夜与赛博改造人展开近身搏斗——`
+},
+    cyber_1_hack: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 1,
+    name: '瘫痪系统',
+    story: `林夜利用便携终端瘫痪了安保系统。
+
+<span class="success">保安们暂时失去行动能力！</span>
+<span class="system">【经验值 +20】</span>`,
+    expGain: 20,
+    choices: [{ type: 'main', text: '深入城市', nextStage: 'cyber_2' }]
+},
+    cyber_2: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 2,
+    name: '加密数据',
+    story: `<span class="system">【第2关 · 加密数据解密】</span>
+
+企业数据库的三重加密需要逐一破解。`,
+    puzzle: { type: 'riddle', index: 2 },
+    puzzleSuccess: '<span class="success">数据解密成功！获得关键情报！</span>',
+    expGain: 25,
+    choices: [{ type: 'main', text: '前往黑市', nextStage: 'cyber_3' }]
+},
+    cyber_3: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 3,
+    name: '黑市交易',
+    story: `<span class="system">【第3关 · 黑市交易】</span>
+
+黑市的角落里堆满了各种<span class="highlight">装备和数据芯片</span>。
+
+<span class="system">【搜索物资，小心陷阱！】</span>`,
+    search: { total: 16, targets: 4, traps: 4 },
+    searchItem: { icon: '💾', name: '数据芯片', desc: '有价值的数据芯片' },
+    searchSuccess: '<span class="success">搜刮完毕！获得数据芯片！</span>',
+    expGain: 30,
+    choices: [{ type: 'main', text: '继续行动', nextStage: 'cyber_4' }]
+},
+    cyber_4: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 4,
+    name: '暗网猎人',
+    story: `<span class="system">【第4关 · 暗网猎人截杀】</span>
+
+暗网猎人在现实中找到了你的位置！
+
+<span class="system">【遭遇战：赛博改造人】</span>`,
+    choices: [
+        { type: 'main', text: '正面战斗', nextStage: 'cyber_4_fight', battle: 'cyber' },
+        { type: 'branch', text: '启动隐匿程序逃跑', nextStage: 'cyber_5' }
+    ]
+},
+    cyber_4_fight: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 4,
+    name: '暗网交锋', beforeBattle: true, battleEnemy: 'cyber',
+    story: `暗网猎人现身！他的义体闪烁着危险的光芒——`
+},
+    cyber_5: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 5,
+    name: '防火墙破解', drawTalent: true, talentRank: 'B',
+    story: `<span class="system">【第5关 · 防火墙破解】</span>
+
+加密数据流过神经网络接口，需要找到解密密钥。`,
+    puzzle: { type: 'riddle', index: 3 },
+    puzzleSuccess: '<span class="success">防火墙破解成功！</span>',
+    expGain: 35,
+    choices: [{ type: 'main', text: '潜入企业大楼', nextStage: 'cyber_6' }]
+},
+    cyber_6: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 6,
+    name: '潜入大楼',
+    story: `<span class="system">【第6关 · 潜入企业大楼】</span>
+
+企业大楼的安保系统密不透风。
+
+<span class="system">【潜行模式：避开监控和巡逻！】</span>`,
+    stealth: { checks: 3, failEnemy: 'cyber' },
+    stealthSuccess: '<span class="success">成功潜入企业大楼！</span>',
+    stealthFail: '<span class="danger">被安保系统发现！</span>',
+    expGain: 40,
+    choices: [{ type: 'main', text: '寻找核心数据', nextStage: 'cyber_7' }]
+},
+    cyber_7: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 7,
+    name: '线人交谈',
+    story: `<span class="system">【第7关 · 线人交谈】</span>
+
+加密通讯频道中传来<span class="highlight">神秘的声音</span>。
+
+"我知道企业的秘密。但我需要你帮我一件事......"
+
+<span class="system">【关键剧情选择】</span>`,
+    choices: [
+        { type: 'main', text: '答应帮助线人', nextStage: 'cyber_7_help' },
+        { type: 'branch', text: '拒绝，独自行动', nextStage: 'cyber_8' }
+    ]
+},
+    cyber_7_help: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 7,
+    name: '交易',
+    story: `线人给了林夜一份<span class="highlight">核心数据</span>。
+
+<span class="success">获得关键情报！防御力+10</span>
+<span class="system">【经验值 +45】</span>`,
+    expGain: 45,
+    onComplete: () => { gameState.def += 10; },
+    choices: [{ type: 'main', text: '继续深入', nextStage: 'cyber_8' }]
+},
+    cyber_8: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 8,
+    name: '义体修复',
+    story: `<span class="system">【第8关 · 义体修复】</span>
+
+街角有人倒在血泊中，义体过载导致<span class="danger">严重烧伤</span>。
+
+<span class="system">【限时救治伤员！】</span>`,
+    rescue: { total: 5, required: 3, timeLimit: 25 },
+    rescueSuccess: '<span class="success">义体修复成功！伤员获救！</span>',
+    expGain: 50,
+    choices: [{ type: 'main', text: '向企业总部进发', nextStage: 'cyber_9' }]
+},
+    cyber_9: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 9,
+    name: 'EMP冲击', drawTalent: true, talentRank: 'A',
+    story: `<span class="system">【第9关 · EMP冲击】</span>
+
+<span class="danger">EMP炸弹</span>引爆！所有电子设备失灵！
+
+<span class="system">【生存模式：在混乱中坚持！】</span>`,
+    survive: { waves: 3, enemies: ['cyber', 'cyber', 'cyber'] },
+    surviveSuccess: '<span class="success">EMP冲击已过！生存成功！</span>',
+    expGain: 55,
+    choices: [{ type: 'main', text: '前往企业核心', nextStage: 'cyber_10' }]
+},
+    cyber_10: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 10,
+    name: '神经链接',
+    story: `<span class="system">【第10关 · 神经链接战】</span>
+
+神经链接被劫持，必须在<span class="danger">虚拟空间</span>中战斗！
+
+<span class="system">【遭遇战：赛博改造人】</span>`,
+    choices: [
+        { type: 'main', text: '在虚拟空间战斗', nextStage: 'cyber_10_fight', battle: 'cyber' }
+    ]
+},
+    cyber_10_fight: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 10,
+    name: '虚拟之战', beforeBattle: true, battleEnemy: 'cyber',
+    story: `虚拟空间中，数据化为实体的敌人扑来——`
+},
+    cyber_11: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 11,
+    name: '神经突破',
+    story: `<span class="system">【第11关 · 神经接口突破】</span>
+
+神经接口的信号异常，可能有未知的陷阱。
+
+林夜的意识被拉入<span class="danger">深层网络</span>——
+
+这里是一切数据的根源。`,
+    puzzle: { type: 'riddle', index: 4 },
+    puzzleSuccess: '<span class="success">神经接口突破成功！</span>',
+    expGain: 65,
+    choices: [{ type: 'main', text: '挑战超级AI', nextStage: 'cyber_12' }]
+},
+    cyber_12: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 12,
+    name: '超级AI',
+    story: `<span class="system">【第12关 · 超级AI对决】</span>
+
+巨型全息投影亮起——企业的<span class="danger">最高AI系统</span>苏醒了！
+
+"人类......你们总是不吸取教训。"
+
+<span class="system">【BOSS战：超级AI】</span>`,
+    choices: [
+        { type: 'main', text: '迎战超级AI！', nextStage: 'cyber_12_fight', battle: 'cyber_boss' }
+    ]
+},
+    cyber_12_fight: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 12,
+    name: 'AI之战', beforeBattle: true, battleEnemy: 'cyber_boss',
+    story: `超级AI控制了整个城市的系统——所有设备都成了它的武器！`
+},
+    cyber_13: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 13,
+    name: '物资搜刮',
+    story: `<span class="system">【第13关 · 物资搜刮】</span>
+
+企业崩溃后，大量<span class="highlight">高级装备</span>散落在废墟中。
+
+<span class="system">【搜索物资，小心陷阱！】</span>`,
+    search: { total: 16, targets: 5, traps: 4 },
+    searchItem: { icon: '⚡', name: '义体组件', desc: '高级义体组件' },
+    searchSuccess: '<span class="success">搜集完毕！获得大量装备！</span>',
+    expGain: 75,
+    choices: [{ type: 'main', text: '前往最终区域', nextStage: 'cyber_14' }]
+},
+    cyber_14: {
+    world: 'cyber', worldName: '赛博朋克', stageNum: 14,
+    name: '系统崩溃', isClear: true,
+    story: `<span class="system">【第14关 · 系统崩溃】</span>
+
+巨型屏幕逐一熄灭，企业的<span class="highlight">控制系统全面崩溃</span>。
+
+城市的天际线在雨中闪烁——
+
+<span class="success">你赢了。</span>
+
+<span class="system">【获得奖励：通行币 x2000】</span>
+<span class="system">【获得奖励：永久属性 +20】</span>
+
+<span class="success">赛博朋克世界通关！</span>`,
+    expGain: 250,
+    onComplete: () => { gameState.maxHp += 20; gameState.atk += 12; gameState.def += 8; gameState.spd += 6; gameState.hp = gameState.maxHp; },
+    choices: [{ type: 'main', text: '返回系统空间', nextStage: 'ending' }]
+},
+    ending: {
+    world: 'end', worldName: '虚无空间', stageNum: 0,
+    name: '归途', isSystemSpace: true, isEnding: true,
+    story: `<span class="system">【欢迎回到系统空间】</span>
+
+你已经完成了所有世界的冒险。
+
+<span class="success">万界行者，欢迎回家。</span>`,
+    choices: [{ type: 'main', text: '查看最终结局', nextStage: 'true_ending' }]
+},
+    true_ending: {
+    world: 'end', worldName: '虚无空间', stageNum: 0,
+    name: '真·结局', isEnding: true,
+    story: `<span class="success">【真结局 · 万界归一】</span>
+
+林夜站在虚无空间的中心。
+
+零号飘到他面前，第一次展现出<span class="highlight">完整的人形</span>。
+
+"宿主......不，林夜。你已经通过了所有世界的考验。"
+
+"万界通行的真正目的......不是让你战斗。"
+
+"而是让你<span class="highlight">理解</span>——每一个世界都有它存在的意义。"
+
+白光再次升起。但这次，不是通往新的世界。
+
+林夜感到一股温暖的力量——<span class="highlight">回家的力量</span>。
+
+<span class="success">【万界行者 · 完】</span>`,
+    choices: [{ type: 'main', text: '回到系统空间', nextStage: 'ending' }]
+}
+};
+function getWorldStageKeys(wk){return Object.keys(stages).filter(k=>stages[k].world===wk).sort((a,b)=>stages[a].stageNum-stages[b].stageNum);}
+function getNextStageKey(ck){const c=stages[ck];if(!c)return null;const ks=getWorldStageKeys(c.world);const i=ks.indexOf(ck);if(i<ks.length-1)return ks[i+1];const wi=WORLD_ORDER.indexOf(c.world);if(wi<WORLD_ORDER.length-1){const nw=WORLD_ORDER[wi+1];const nk=getWorldStageKeys(nw);return nk.length>0?nk[0]:null;}return null;}
+console.log('关卡数据加载完成:',Object.keys(stages).length,'关');
+
+</script>
+<script>
+// ========== core.js ==========
+// 万界行者 - 核心状态管理
+
+// ========== 版权与来源追溯 ==========
+const GAME_META = {
+    name: '万界行者',
+    version: '1.1.0',
+    subtitle: '四世界多模式版',
+    author: '原创作者',
+    license: 'MIT',
+    year: 2026,
+    description: '原创文字冒险RPG游戏，包含丧尸围城、仙侠大陆、星际殖民、赛博朋克四个世界。',
+    technology: 'HTML5 + CSS3 + JavaScript（纯前端，无框架依赖）',
+    sourceNote: '本游戏为原创作品。允许自由使用、修改和分发本源代码，但必须保留本版权声明及来源说明。二次分发或衍生作品应在显著位置注明原始来源。'
+};
+
+// ========== 快进模式 ==========
+let skipMode = false;       // 全局快进开关
+let typeWriterAbort = null;  // 打字机中止标记
+
+function toggleSkipMode() {
+    skipMode = !skipMode;
+    const btn = document.getElementById('skipBtn');
+    if (btn) {
+        btn.textContent = skipMode ? '⏩ 快进中' : '⏩ 快进';
+        btn.classList.toggle('active', skipMode);
+    }
+    // 如果正在打字，立即完成
+    if (skipMode && typeWriterAbort) {
+        typeWriterAbort();
+        typeWriterAbort = null;
+    }
+    showSpiritDialog(skipMode ? '快进模式已开启：剧情跳过打字效果，战斗自动攻击' : '快进模式已关闭');
+}
+
+// ========== 等级名称系统 ==========
+const LEVEL_NAMES = {
+    1:  '凡人',
+    2:  '准战士',
+    3:  '1级战士',
+    4:  '1级战士',
+    5:  '1级战士',
+    6:  '2级战士',
+    7:  '2级战士',
+    8:  '2级战士',
+    9:  '2级战士',
+    10: '3级战士',
+    11: '3级战士',
+    12: '3级战士',
+    13: '3级战士',
+    14: '4级战士',
+    15: '4级战士',
+    16: '4级战士',
+    17: '4级战士',
+    18: '5级战士',
+    19: '5级战士',
+    20: '5级战士',
+    21: '5级战士',
+    22: '6级战士',
+    23: '6级战士',
+    24: '6级战士',
+    25: '6级战士',
+    26: '7级战士',
+    27: '7级战士',
+    28: '7级战士',
+    29: '7级战士',
+    30: '8级战士',
+    31: '8级战士',
+    32: '8级战士',
+    33: '8级战士',
+    34: '9级战士',
+    35: '9级战士',
+    36: '9级战士',
+    37: '9级战士',
+    38: '9级战士',
+    39: '9级战士',
+    40: '9级战士',
+    41: '准战王',
+    42: '准战王',
+    43: '准战王',
+    44: '准战王',
+    45: '准战王',
+    46: '战王',
+    47: '战王',
+    48: '战王',
+    49: '战王',
+    50: '战王',
+    51: '准战神',
+    52: '准战神',
+    53: '准战神',
+    54: '准战神',
+    55: '准战神',
+    56: '战神',
+    57: '战神',
+    58: '战神',
+    59: '战神',
+    60: '战神',
+    61: '战神至尊',
+    62: '战神至尊',
+    63: '战神至尊',
+    64: '战神至尊',
+    65: '战神至尊',
+    66: '万界行者',
+    67: '万界行者',
+    68: '万界行者',
+    69: '万界行者',
+    70: '万界行者',
+    71: '万界之主',
+    72: '万界之主',
+    73: '万界之主',
+    74: '万界之主',
+    75: '万界之主',
+    76: '万界至尊',
+    77: '万界至尊',
+    78: '万界至尊',
+    79: '万界至尊',
+    80: '万界至尊',
+    81: '万界帝君',
+    82: '万界帝君',
+    83: '万界帝君',
+    84: '万界帝君',
+    85: '万界帝君',
+    86: '万界神王',
+    87: '万界神王',
+    88: '万界神王',
+    89: '万界神王',
+    90: '万界神王',
+    91: '万界创世',
+    92: '万界创世',
+    93: '万界创世',
+    94: '万界创世',
+    95: '万界创世',
+    96: '万界主宰',
+    97: '万界主宰',
+    98: '万界主宰',
+    99: '万界主宰',
+    100:'万界至高'
+};
+
+function getLevelName(lv) {
+    if (lv <= 100) return LEVEL_NAMES[lv] || '凡人';
+    return '万界至高';
+}
+
+const defaultState = () => ({
+    stageId: 'intro', stageNum: 0,
+    hp: 100, maxHp: 100, atk: 15, def: 10, spd: 12,
+    exp: 0, level: 1,
+    // 属性点系统（升级获得，玩家手动分配）
+    freePoints: 0,
+    allocatedPoints: { hp: 0, atk: 0, def: 0, spd: 0 },
+    talent: null, skillCooldown: 0,
+    inBattle: false, enemy: null,
+    playerName: '林夜',
+    currentWorld: null,
+    completedWorlds: [],
+    worldProgress: { zombie: 0, xianxia: 0, scifi: 0, cyber: 0 },
+    choices: {},
+    stats: { battles: 0, wins: 0, deaths: 0 },
+    // 背包系统
+    inventory: [],
+    maxInventory: 20,
+    // 装备系统
+    equipment: { weapon: null, armor: null, accessory: null },
+    // 金币系统
+    gold: 0,
+    // 技能列表（独立于天赋）
+    skills: [],
+    // 天赋系统（可叠加多个天赋）
+    talents: [],
+    // 每世界天赋抽取次数追踪
+    worldTalentDraws: { zombie: 0, xianxia: 0, scifi: 0, cyber: 0 },
+    // 每世界天赋池（世界内抽取的暂存）
+    worldTalentPool: { zombie: [], xianxia: [], scifi: [], cyber: [] },
+    // 已保留的天赋
+    keptTalents: [],
+    // 世界难度选择（仅已通关世界可选）
+    worldDifficulty: {},
+    // 世界装备掉落追踪（确保每种装备至少掉一次）
+    worldEquipDropTracker: {},
+    // Buff状态
+    buffs: []
+});
+
+let gameState = defaultState();
+
+// ========== 关键全局变量（必须在各脚本使用前定义）==========
+let currentStageData = null;        // 当前关卡数据
+let battleState = { turn: 'player', playerDefending: false };  // 战斗状态
+let pendingBattleNext = null;        // 战斗胜利后的下一关卡
+
+// ========== 装备数据（含世界特色装备） ==========
+const EQUIPMENT_DB = {
+    weapons: [
+        // 丧尸世界特色武器
+        { id: 'rusty_rod', name: '生锈铁棍', icon: '🔧', type: 'weapon', stat: 'atk', value: 5, desc: '攻击力+5', rarity: 'common', world: 'zombie' },
+        { id: 'med_dagger', name: '医用匕首', icon: '🗡️', type: 'weapon', stat: 'atk', value: 8, desc: '攻击力+8', rarity: 'uncommon', world: 'zombie' },
+        // 仙侠世界特色武器
+        { id: 'iron_sword', name: '青云剑', icon: '⚔️', type: 'weapon', stat: 'atk', value: 12, desc: '攻击力+12 · 仙家宝剑', rarity: 'uncommon', world: 'xianxia' },
+        { id: 'spirit_blade', name: '灵纹刀', icon: '🗡️', type: 'weapon', stat: 'atk', value: 18, desc: '攻击力+18 · 妖兽之骨锻造', rarity: 'rare', world: 'xianxia' },
+        // 赛博世界特色武器
+        { id: 'laser_rifle', name: '等离子步枪', icon: '🔫', type: 'weapon', stat: 'atk', value: 15, desc: '攻击力+15 · 外星科技', rarity: 'rare', world: 'scifi' },
+        { id: 'ion_cannon', name: '离子加农', icon: '☄️', type: 'weapon', stat: 'atk', value: 20, desc: '攻击力+20 · 虫族能量核心驱动', rarity: 'epic', world: 'scifi' },
+        // 赛博朋克世界特色武器
+        { id: 'neural_blade', name: '神经刃', icon: '⚡', type: 'weapon', stat: 'atk', value: 22, desc: '攻击力+22 · 意识直连', rarity: 'epic', world: 'cyber' },
+        { id: 'quantum_katana', name: '量子武士刀', icon: '🌟', type: 'weapon', stat: 'atk', value: 30, desc: '攻击力+30 · 斩断数据链', rarity: 'legendary', world: 'cyber' },
+        // 跨世界传说级
+        { id: 'void_sword', name: '虚空之剑', icon: '✨', type: 'weapon', stat: 'atk', value: 40, desc: '攻击力+40 · 万界行者专属', rarity: 'legendary', world: null }
+    ],
+    armors: [
+        // 丧尸世界特色防具
+        { id: 'leather_vest', name: '皮甲', icon: '🦺', type: 'armor', stat: 'def', value: 3, desc: '防御力+3', rarity: 'common', world: 'zombie' },
+        { id: 'kevlar', name: '防弹衣', icon: '🛡️', type: 'armor', stat: 'def', value: 8, desc: '防御力+8', rarity: 'uncommon', world: 'zombie' },
+        // 仙侠世界特色防具
+        { id: 'spirit_robe', name: '天蚕宝衣', icon: '👘', type: 'armor', stat: 'def', value: 10, desc: '防御力+10 · 刀枪不入', rarity: 'rare', world: 'xianxia' },
+        { id: 'golden_armor', name: '金丝软甲', icon: '🛡️', type: 'armor', stat: 'def', value: 16, desc: '防御力+16 · 妖兽甲壳打造', rarity: 'epic', world: 'xianxia' },
+        // 赛博世界特色防具
+        { id: 'nano_suit', name: '纳米战甲', icon: '🤖', type: 'armor', stat: 'def', value: 15, desc: '防御力+15 · 自适应护盾', rarity: 'rare', world: 'scifi' },
+        { id: 'bio_shield', name: '生物力场甲', icon: '🌀', type: 'armor', stat: 'def', value: 20, desc: '防御力+20 · 虫族基因融合', rarity: 'epic', world: 'scifi' },
+        // 赛博朋克世界特色防具
+        { id: 'cyber_armor', name: '赛博护甲', icon: '🔩', type: 'armor', stat: 'def', value: 22, desc: '防御力+22 · 碳纤维骨架', rarity: 'epic', world: 'cyber' },
+        { id: 'exoskeleton', name: '外骨骼战衣', icon: '🦾', type: 'armor', stat: 'def', value: 30, desc: '防御力+30 · 动力辅助系统', rarity: 'legendary', world: 'cyber' },
+        // 跨世界传说级
+        { id: 'void_shield', name: '虚空之盾', icon: '💎', type: 'armor', stat: 'def', value: 38, desc: '防御力+38 · 万界行者专属', rarity: 'legendary', world: null }
+    ],
+    accessories: [
+        // 丧尸世界特色饰品
+        { id: 'speed_boots', name: '疾风靴', icon: '👢', type: 'accessory', stat: 'spd', value: 5, desc: '速度+5', rarity: 'common', world: 'zombie' },
+        { id: 'night_vision', name: '夜视仪', icon: '🔦', type: 'accessory', stat: 'spd', value: 8, desc: '速度+8', rarity: 'uncommon', world: 'zombie' },
+        // 仙侠世界特色饰品
+        { id: 'wind_charm', name: '御风符', icon: '🎐', type: 'accessory', stat: 'spd', value: 10, desc: '速度+10 · 踏云而行', rarity: 'rare', world: 'xianxia' },
+        { id: 'thunder_pendant', name: '雷灵坠', icon: '⚡', type: 'accessory', stat: 'spd', value: 15, desc: '速度+15 · 天劫之力灌注', rarity: 'epic', world: 'xianxia' },
+        // 赛博世界特色饰品
+        { id: 'jet_boots', name: '喷射靴', icon: '🚀', type: 'accessory', stat: 'spd', value: 12, desc: '速度+12 · 离子推进', rarity: 'rare', world: 'scifi' },
+        { id: 'gravity_ring', name: '引力指环', icon: '🌀', type: 'accessory', stat: 'spd', value: 18, desc: '速度+18 · 重力操控', rarity: 'epic', world: 'scifi' },
+        // 赛博朋克世界特色饰品
+        { id: 'neural_chip', name: '神经芯片', icon: '💻', type: 'accessory', stat: 'spd', value: 16, desc: '速度+16 · 反应加速200%', rarity: 'epic', world: 'cyber' },
+        { id: 'time_circuit', name: '时空回路', icon: '⏳', type: 'accessory', stat: 'spd', value: 24, desc: '速度+24 · 时间感知增强', rarity: 'legendary', world: 'cyber' },
+        // 跨世界传说级
+        { id: 'void_ring', name: '虚空之戒', icon: '🔮', type: 'accessory', stat: 'spd', value: 30, desc: '速度+30 · 万界行者专属', rarity: 'legendary', world: null }
+    ]
+};
+
+// 每个世界的装备池索引（方便按世界掉落）
+const WORLD_EQUIPMENT_POOL = {
+    zombie: {
+        weapons:  [0, 1],       // 生锈铁棍, 医用匕首
+        armors:   [0, 1],       // 皮甲, 防弹衣
+        accessories: [0, 1]     // 疾风靴, 夜视仪
+    },
+    xianxia: {
+        weapons:  [2, 3],       // 青云剑, 灵纹刀
+        armors:   [2, 3],       // 天蚕宝衣, 金丝软甲
+        accessories: [2, 3]     // 御风符, 雷灵坠
+    },
+    scifi: {
+        weapons:  [4, 5],       // 等离子步枪, 离子加农
+        armors:   [4, 5],       // 纳米战甲, 生物力场甲
+        accessories: [4, 5]     // 喷射靴, 引力指环
+    },
+    cyber: {
+        weapons:  [6, 7],       // 神经刃, 量子武士刀
+        armors:   [6, 7],       // 赛博护甲, 外骨骼战衣
+        accessories: [6, 7]     // 神经芯片, 时空回路
+    }
+};
+
+// 从指定世界的装备池中随机获取一件装备
+function getWorldEquipment(worldId, slotType) {
+    const pool = WORLD_EQUIPMENT_POOL[worldId];
+    if (!pool) return null;
+    const idxArr = pool[slotType];
+    if (!idxArr || idxArr.length === 0) return null;
+    const dbArr = EQUIPMENT_DB[slotType];
+    const picked = idxArr[Math.floor(Math.random() * idxArr.length)];
+    return dbArr[picked] ? { ...dbArr[picked] } : null;
+}
+
+// 从指定世界随机获取任意一件装备（武器/防具/饰品）
+function getRandomWorldEquipment(worldId) {
+    const slotTypes = ['weapons', 'armors', 'accessories'];
+    const type = slotTypes[Math.floor(Math.random() * 3)];
+    return getWorldEquipment(worldId, type);
+}
+
+// ========== 背包操作函数 ==========
+// 背包扩展配置
+const INVENTORY_EXPAND = [
+    { maxSlots: 30,  cost: 200,  name: '小型背包升级' },
+    { maxSlots: 40,  cost: 500,  name: '中型背包升级' },
+    { maxSlots: 60,  cost: 1000, name: '大型背包升级' },
+    { maxSlots: 80,  cost: 2000, name: '巨型背包升级' },
+    { maxSlots: 100, cost: 5000, name: '传奇背包升级' },
+];
+
+function getNextExpand() {
+    const currentMax = gameState.maxInventory || 20;
+    for (const e of INVENTORY_EXPAND) {
+        if (currentMax < e.maxSlots) return e;
+    }
+    return null; // 已满级
+}
+
+function expandInventory() {
+    const next = getNextExpand();
+    if (!next) {
+        showSpiritDialog('背包已达最大容量！');
+        return;
+    }
+    if (gameState.gold < next.cost) {
+        showSpiritDialog('金币不足！需要' + next.cost + '金币，当前仅有' + gameState.gold + '金币。');
+        return;
+    }
+    gameState.gold -= next.cost;
+    gameState.maxInventory = next.maxSlots;
+    showSpiritDialog('背包扩容成功！容量提升至' + next.maxSlots + '格。（花费' + next.cost + '金币）');
+    updatePlayerUI();
+    // 如果背包面板已打开，刷新显示
+    if (document.getElementById('inventoryPanel').classList.contains('active')) {
+        renderInventory();
+    }
+}
+
+function addItemToInventory(item) {
+    if (gameState.inventory.length >= gameState.maxInventory) {
+        // 战斗中不弹窗提示背包满（由silentAddItem处理）
+        if (!gameState.inBattle) showSpiritDialog('背包已满！请先丢弃一些物品。');
+        return false;
+    }
+    gameState.inventory.push({ ...item, uid: Date.now() + Math.random() });
+    // 战斗中不弹窗提示（避免打断战斗流）
+    if (!gameState.inBattle) showSpiritDialog('获得物品：' + item.name);
+    updatePlayerUI();
+    return true;
+}
+
+function removeItemFromInventory(uid) {
+    gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+    updatePlayerUI();
+}
+
+function equipItem(uid) {
+    const item = gameState.inventory.find(i => i.uid === uid);
+    if (!item) return;
+    const slot = item.type; // weapon, armor, accessory
+    if (!gameState.equipment[slot]) {
+        gameState.equipment[slot] = item;
+    } else {
+        // 交换：把当前装备放回背包，新装备穿上
+        gameState.inventory.push(gameState.equipment[slot]);
+        gameState.equipment[slot] = item;
+    }
+    // 从背包中移除
+    gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+    recalculateStats();
+    updatePlayerUI();
+    showSpiritDialog('装备了：' + item.name);
+}
+
+function unequipItem(slot) {
+    if (!gameState.equipment[slot]) return;
+    if (gameState.inventory.length >= gameState.maxInventory) {
+        showSpiritDialog('背包已满，无法卸下装备！');
+        return;
+    }
+    gameState.inventory.push(gameState.equipment[slot]);
+    gameState.equipment[slot] = null;
+    recalculateStats();
+    updatePlayerUI();
+}
+
+function useConsumable(uid, targetNpc) {
+    const item = gameState.inventory.find(i => i.uid === uid);
+    if (!item) return;
+    if (gameState.inBattle && !item.battleUse) {
+        showSpiritDialog('战斗中无法使用此道具！');
+        return;
+    }
+
+    // NPC治疗道具
+    if (item.subtype === 'npc_heal' && targetNpc) {
+        showSpiritDialog('对' + targetNpc + '使用了' + item.name + '，恢复了' + item.value + '点生命！');
+        gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+        updatePlayerUI();
+        return;
+    }
+    if (item.subtype === 'npc_heal' && !targetNpc) {
+        // 如果没有指定NPC目标，对当前伙伴使用
+        showSpiritDialog('请指定要治疗的目标NPC。');
+        return;
+    }
+
+    // 永久属性道具
+    if (item.subtype === 'permanent') {
+        if (item.applied) { showSpiritDialog('此道具已使用过！'); return; }
+        item.applied = true;
+        recalculateStats();
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp);
+        showSpiritDialog('使用了' + item.name + '，' + item.desc + '！');
+        updatePlayerUI();
+        return; // 永久道具不消耗，标记 applied 即可
+    }
+
+    // 临时buff道具
+    if (item.subtype === 'buff') {
+        if (!gameState.buffs) gameState.buffs = [];
+        gameState.buffs.push({ stat: item.stat, value: item.value, duration: item.duration, name: item.name });
+        recalculateStats();
+        showSpiritDialog('使用了' + item.name + '，' + item.desc);
+        gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+        updatePlayerUI();
+        return;
+    }
+
+    // 补血道具
+    if (item.subtype === 'heal') {
+        if (gameState.inBattle) { showSpiritDialog('战斗中无法使用回复道具！'); return; }
+        const healVal = item.value >= 9999 ? gameState.maxHp : item.value;
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + healVal);
+        showSpiritDialog('使用了' + item.name + '，恢复' + Math.min(healVal, gameState.maxHp - gameState.hp + healVal) + '生命值');
+        gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+        updatePlayerUI();
+        return;
+    }
+
+    // 通用消耗
+    if (item.effect === 'heal') {
+        if (gameState.inBattle) { showSpiritDialog('战斗中无法使用回复道具！'); return; }
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + (item.value || 30));
+        showSpiritDialog('使用了' + item.name + '，恢复' + (item.value || 30) + '生命值');
+    } else if (item.effect === 'full_heal') {
+        if (gameState.inBattle) { showSpiritDialog('战斗中无法使用回复道具！'); return; }
+        gameState.hp = gameState.maxHp;
+        showSpiritDialog('使用了' + item.name + '，完全恢复！');
+    }
+    gameState.inventory = gameState.inventory.filter(i => i.uid !== uid);
+    updatePlayerUI();
+}
+
+// ========== 消耗品/道具数据库 ==========
+const CONSUMABLE_DB = {
+    // 补血道具（不可在战斗中使用）
+    heal_small:  { id: 'heal_small',  name: '小回复药',  icon: '💊', type: 'consumable', subtype: 'heal', value: 30,  desc: '恢复30点生命值（不可战斗中使用）', battleUse: false },
+    heal_medium: { id: 'heal_medium', name: '中回复药',  icon: '💉', type: 'consumable', subtype: 'heal', value: 60,  desc: '恢复60点生命值（不可战斗中使用）', battleUse: false },
+    heal_large:  { id: 'heal_large',  name: '大回复药',  icon: '🧪', type: 'consumable', subtype: 'heal', value: 120, desc: '恢复120点生命值（不可战斗中使用）', battleUse: false },
+    heal_full:   { id: 'heal_full',   name: '圣水',      icon: '✨', type: 'consumable', subtype: 'heal', value: 9999, desc: '完全恢复生命值（不可战斗中使用）', battleUse: false },
+    // 补气道具（不可在战斗中使用）
+    buff_atk:    { id: 'buff_atk',    name: '力量药剂',  icon: '💪', type: 'consumable', subtype: 'buff', stat: 'atk', value: 5,  duration: 5,  desc: '攻击力+5，持续5场战斗（不可战斗中使用）', battleUse: false },
+    buff_def:    { id: 'buff_def',    name: '铁壁药剂',  icon: '🛡️', type: 'consumable', subtype: 'buff', stat: 'def', value: 4,  duration: 5,  desc: '防御力+4，持续5场战斗（不可战斗中使用）', battleUse: false },
+    buff_spd:    { id: 'buff_spd',    name: '疾风药剂',  icon: '💨', type: 'consumable', subtype: 'buff', stat: 'spd', value: 3,  duration: 5,  desc: '速度+3，持续5场战斗（不可战斗中使用）', battleUse: false },
+    // 给NPC使用的道具
+    npc_heal:    { id: 'npc_heal',    name: '急救包',    icon: '🩹', type: 'consumable', subtype: 'npc_heal', value: 50, desc: '可对NPC使用，恢复其50点生命', battleUse: false },
+    npc_elixir:  { id: 'npc_elixir',  name: '万灵丹',    icon: '🔮', type: 'consumable', subtype: 'npc_heal', value: 150, desc: '可对NPC使用，恢复其150点生命', battleUse: false },
+    // 永久属性道具
+    per_atk:     { id: 'per_atk',     name: '攻击秘籍',  icon: '📕', type: 'consumable', subtype: 'permanent', stat: 'atk', value: 3,  desc: '永久增加攻击力+3', battleUse: false },
+    per_def:     { id: 'per_def',     name: '防御秘籍',  icon: '📗', type: 'consumable', subtype: 'permanent', stat: 'def', value: 3,  desc: '永久增加防御力+3', battleUse: false },
+    per_spd:     { id: 'per_spd',     name: '身法秘籍',  icon: '📘', type: 'consumable', subtype: 'permanent', stat: 'spd', value: 2,  desc: '永久增加速度+2', battleUse: false },
+    per_hp:      { id: 'per_hp',      name: '生命秘籍',  icon: '📙', type: 'consumable', subtype: 'permanent', stat: 'hp', value: 20, desc: '永久增加最大生命+20', battleUse: false },
+};
+
+// ========== 属性点分配函数 ==========
+function allocatePoint(stat) {
+    if (gameState.freePoints <= 0) { showSpiritDialog('没有可分配的属性点！'); return; }
+    gameState.freePoints--;
+    gameState.allocatedPoints[stat]++;
+    recalculateStats();
+    updatePlayerUI();
+    showSpiritDialog('分配成功！' + stat + '+1');
+}
+
+// ========== 属性重算（基础 + 分配点 + 装备 + 永久道具 + 天赋 + buff） ==========
+function recalculateStats() {
+    // 1. 基础值（1级属性 + 每级自动全属性+1）
+    const baseHp = 100 + (gameState.level - 1) * 1;
+    const baseAtk = 15 + (gameState.level - 1) * 1;
+    const baseDef = 10 + (gameState.level - 1) * 1;
+    const baseSpd = 12 + (gameState.level - 1) * 1;
+
+    gameState.maxHp = baseHp;
+    gameState.atk = baseAtk;
+    gameState.def = baseDef;
+    gameState.spd = baseSpd;
+
+    // 2. 玩家手动分配的属性点（每点+3）
+    gameState.maxHp += (gameState.allocatedPoints.hp || 0) * 3;
+    gameState.atk  += (gameState.allocatedPoints.atk || 0) * 3;
+    gameState.def  += (gameState.allocatedPoints.def || 0) * 3;
+    gameState.spd  += (gameState.allocatedPoints.spd || 0) * 3;
+
+    // 3. 装备加成
+    for (const slot of ['weapon', 'armor', 'accessory']) {
+        const eq = gameState.equipment[slot];
+        if (eq && eq.stat && eq.value) {
+            if (eq.stat === 'atk') gameState.atk += eq.value;
+            else if (eq.stat === 'def') gameState.def += eq.value;
+            else if (eq.stat === 'spd') gameState.spd += eq.value;
+            else if (eq.stat === 'hp') gameState.maxHp += eq.value;
+        }
+    }
+
+    // 4. 永久道具加成（从背包中的 permanent 道具统计）
+    gameState.inventory.forEach(item => {
+        if (item.subtype === 'permanent' && item.applied) {
+            if (item.stat === 'atk') gameState.atk += item.value;
+            else if (item.stat === 'def') gameState.def += item.value;
+            else if (item.stat === 'spd') gameState.spd += item.value;
+            else if (item.stat === 'hp') gameState.maxHp += item.value;
+        }
+    });
+
+    // 5. 天赋加成（已保留天赋 + 已有天赋 + 当前世界天赋池中的天赋）
+    const allTalents = (gameState.talents || []).concat(gameState.keptTalents || []);
+    // 当前世界天赋池中的天赋也生效（世界通关后才需选择保留）
+    if (gameState.currentWorld && gameState.worldTalentPool) {
+        const worldPool = gameState.worldTalentPool[gameState.currentWorld] || [];
+        worldPool.forEach(t => allTalents.push(t));
+    }
+    // 记录天赋加成前的属性（用于UI显示「基础+天赋」格式）
+    const preTalentAtk = gameState.atk;
+    const preTalentDef = gameState.def;
+    const preTalentSpd = gameState.spd;
+    const preTalentHp = gameState.maxHp;
+    // 记录天赋加成明细（用于UI显示）
+    gameState._talentBonuses = { atkPct: 0, defPct: 0, spdPct: 0, hpPct: 0, atkFlat: 0, defFlat: 0, atkTotal: 0, defTotal: 0, spdTotal: 0, hpTotal: 0 };
+    allTalents.forEach(t => {
+        if (t.effect === 'world_dominate') {
+            // 超神·万界主宰：全属性提升100%
+            gameState.atk = Math.floor(gameState.atk * 2.0);
+            gameState.def = Math.floor(gameState.def * 2.0);
+            gameState.spd = Math.floor(gameState.spd * 2.0);
+            gameState.maxHp = Math.floor(gameState.maxHp * 2.0);
+            gameState._talentBonuses.atkPct += 100;
+            gameState._talentBonuses.defPct += 100;
+            gameState._talentBonuses.spdPct += 100;
+            gameState._talentBonuses.hpPct += 100;
+        } else if (t.effect === 'all_up') {
+            gameState.atk = Math.floor(gameState.atk * 1.3);
+            gameState.def = Math.floor(gameState.def * 1.3);
+            gameState.spd = Math.floor(gameState.spd * 1.3);
+            gameState.maxHp = Math.floor(gameState.maxHp * 1.3);
+            gameState._talentBonuses.atkPct += 30;
+            gameState._talentBonuses.defPct += 30;
+            gameState._talentBonuses.spdPct += 30;
+            gameState._talentBonuses.hpPct += 30;
+        } else if (t.effect === 'atk_up') {
+            gameState.atk = Math.floor(gameState.atk * 1.8);
+            gameState._talentBonuses.atkPct += 80;
+        } else if (t.effect === 'def_up') {
+            gameState.def = Math.floor(gameState.def * 1.5);
+            gameState._talentBonuses.defPct += 50;
+        } else if (t.effect === 'dodge_up') {
+            // D级闪电反射：反应速度提升，增加速度属性
+            gameState.spd = Math.floor(gameState.spd * 1.3);
+            gameState._talentBonuses.spdPct += 30;
+        } else if (t.effect === 'sense') {
+            // D级感知：提升速度（感知敌人使反应更快）
+            gameState.spd = Math.floor(gameState.spd * 1.15);
+            gameState._talentBonuses.spdPct += 15;
+        } else if (t.effect === 'speed_up') {
+            // C级疾风步：已在playerDodge中处理闪避率，此处增加速度属性
+            gameState.spd = Math.floor(gameState.spd * 1.2);
+            gameState._talentBonuses.spdPct += 20;
+        } else if (t.effect === 'punch_up') {
+            // C级铁拳：已在playerAttack中处理伤害，此处增加攻击属性
+            gameState.atk = Math.floor(gameState.atk * 1.1);
+            gameState._talentBonuses.atkPct += 10;
+        } else if (t.effect === 'bonus_damage') {
+            // C级剑意初现：已在playerAttack中处理，此处增加攻击属性
+            gameState.atk = Math.floor(gameState.atk * 1.1);
+            gameState._talentBonuses.atkPct += 10;
+        } else if (t.effect === 'lifesteal') {
+            // C级生命汲取：增加最大生命值（吸血体质更健壮）
+            gameState.maxHp = Math.floor(gameState.maxHp * 1.1);
+            gameState._talentBonuses.hpPct += 10;
+        } else if (t.effect === 'time_slow') {
+            // B级时空凝滞：已在enemyTurn中处理减伤，此处增加防御
+            gameState.def = Math.floor(gameState.def * 1.1);
+            gameState._talentBonuses.defPct += 10;
+        } else if (t.effect === 'void_strike') {
+            // SS级时空断裂：增加攻击力
+            gameState.atk = Math.floor(gameState.atk * 1.2);
+            gameState._talentBonuses.atkPct += 20;
+        } else if (t.effect === 'immortal_will') {
+            // SS级不灭意志：全属性提升50%
+            gameState.atk = Math.floor(gameState.atk * 1.5);
+            gameState.def = Math.floor(gameState.def * 1.5);
+            gameState.spd = Math.floor(gameState.spd * 1.5);
+            gameState.maxHp = Math.floor(gameState.maxHp * 1.5);
+            gameState._talentBonuses.atkPct += 50;
+            gameState._talentBonuses.defPct += 50;
+            gameState._talentBonuses.spdPct += 50;
+            gameState._talentBonuses.hpPct += 50;
+        } else if (t.effect === 'omni_double') {
+            // SSS级万象归一：全属性提升60%
+            gameState.atk = Math.floor(gameState.atk * 1.6);
+            gameState.def = Math.floor(gameState.def * 1.6);
+            gameState.spd = Math.floor(gameState.spd * 1.6);
+            gameState.maxHp = Math.floor(gameState.maxHp * 1.6);
+            gameState._talentBonuses.atkPct += 60;
+            gameState._talentBonuses.defPct += 60;
+            gameState._talentBonuses.spdPct += 60;
+            gameState._talentBonuses.hpPct += 60;
+        }
+    });
+
+    // 记录天赋带来的总加成值
+    gameState._talentBonuses.atkTotal = gameState.atk - preTalentAtk;
+    gameState._talentBonuses.defTotal = gameState.def - preTalentDef;
+    gameState._talentBonuses.spdTotal = gameState.spd - preTalentSpd;
+    gameState._talentBonuses.hpTotal = gameState.maxHp - preTalentHp;
+
+    // 6. 临时buff加成
+    if (gameState.buffs) {
+        gameState.buffs.forEach(b => {
+            if (b.stat && b.value) {
+                if (b.stat === 'atk') gameState.atk += b.value;
+                else if (b.stat === 'def') gameState.def += b.value;
+                else if (b.stat === 'spd') gameState.spd += b.value;
+                else if (b.stat === 'hp') gameState.maxHp += b.value;
+            }
+        });
+    }
+
+    // 确保当前HP不超过maxHp
+    if (gameState.hp > gameState.maxHp) gameState.hp = gameState.maxHp;
+}
+
+// ========== 背包/装备数据模板（用于关卡奖励） ==========
+function createItemFromReward(stage) {
+    if (!stage || !stage.reward) return null;
+    const r = stage.reward;
+    if (r.items && r.items.length > 0) {
+        const itemName = r.items[0];
+        // 根据世界和阶段返回对应品质的装备
+        const world = stage.world || 'zombie';
+        const lvl = stage.stageNum || 1;
+        if (world === 'zombie') {
+            if (lvl >= 10) return getWorldEquipment('zombie', 'weapons'); // 医用匕首
+            return getWorldEquipment('zombie', 'armors'); // 皮甲
+        } else if (world === 'xianxia') {
+            if (lvl >= 8) return getWorldEquipment('xianxia', 'weapons'); // 青云剑
+            return getWorldEquipment('xianxia', 'armors'); // 天蚕宝衣
+        } else if (world === 'scifi') {
+            if (lvl >= 10) return getWorldEquipment('scifi', 'armors'); // 纳米战甲
+            return getWorldEquipment('scifi', 'weapons'); // 等离子步枪
+        } else if (world === 'cyber') {
+            if (lvl >= 12) return getWorldEquipment('cyber', 'weapons'); // 神经刃
+            return getWorldEquipment('cyber', 'armors'); // 赛博护甲
+        }
+    }
+    return null;
+}
+
+</script>
+<script>
+// ========== battle.js ==========
+// 万界行者 - 战斗系统
+
+// 辅助：获取所有激活的天赋效果列表
+function getAllTalentEffects() {
+    const effects = [];
+    const allTalents = (gameState.talents || []).concat(gameState.keptTalents || []);
+    allTalents.forEach(t => { if (t.effect) effects.push(t.effect); });
+    return effects;
+}
+// 辅助：检查是否拥有某个天赋效果
+function hasTalentEffect(effect) {
+    return getAllTalentEffects().includes(effect);
+}
+// 辅助：获取第一个拥有指定效果的天赋对象
+function getTalentByEffect(effect) {
+    const all = (gameState.talents || []).concat(gameState.keptTalents || []);
+    return all.find(t => t.effect === effect) || null;
+}
+
+// ========== 难度系统 ==========
+const DIFFICULTY_CONFIG = {
+    normal:   { name: '普通', icon: '🟢', multiplier: 0.6,  expBonus: 1.0, desc: '适合首次通关' },
+    hard:     { name: '困难', icon: '🟡', multiplier: 0.8,  expBonus: 1.3, desc: '敌人更强，奖励更多' },
+    nightmare:{ name: '噩梦', icon: '🟠', multiplier: 1.0,  expBonus: 1.6, desc: '原始难度，考验实力' },
+    hell:     { name: '地狱', icon: '🔴', multiplier: 1.3,  expBonus: 2.0, desc: '极限挑战，双倍奖励' }
+};
+
+// 获取当前世界的难度系数（首通=普通0.6，重入=玩家选择）
+function getDifficultyMultiplier(worldId) {
+    if (!worldId) return 0.6;
+    const completed = gameState.completedWorlds && gameState.completedWorlds.includes(worldId);
+    if (!completed) return 0.6; // 首通固定普通难度
+    const chosen = gameState.worldDifficulty && gameState.worldDifficulty[worldId];
+    const cfg = DIFFICULTY_CONFIG[chosen || 'normal'];
+    // 按玩家等级微调：等级越高敌人越强一点（每10级额外+0.05）
+    const levelBonus = Math.floor((gameState.level || 1) / 10) * 0.05;
+    return Math.min(2.0, cfg.multiplier + levelBonus);
+}
+
+function getExpBonus(worldId) {
+    if (!worldId) return 1.0;
+    const completed = gameState.completedWorlds && gameState.completedWorlds.includes(worldId);
+    if (!completed) return 1.0; // 首通无经验加成
+    const chosen = gameState.worldDifficulty && gameState.worldDifficulty[worldId];
+    const cfg = DIFFICULTY_CONFIG[chosen || 'normal'];
+    return cfg.expBonus;
+}
+
+function startBattle(enemyType) {
+    const base = { ...enemies[enemyType] };
+    // 应用难度系数
+    const worldId = gameState.currentWorld;
+    const mult = getDifficultyMultiplier(worldId);
+    base.hp = Math.floor(base.hp * mult);
+    base.atk = Math.max(1, Math.floor(base.atk * mult));
+    base.def = Math.max(1, Math.floor(base.def * mult));
+    base.spd = Math.max(1, Math.floor(base.spd * mult));
+
+    // BOSS动态平衡：确保在当前装备/天赋下约10回合击杀
+    if (base.boss) {
+        // 计算玩家当前有效攻击力（含装备）
+        const playerDmg = Math.max(1, gameState.atk - base.def + 2);
+        // 目标：约10回合击杀 → BOSS HP ≈ playerDmg * 10
+        const targetBossHp = playerDmg * 10;
+        // 目标：BOSS每回合打玩家不超过maxHp的15%（让玩家活下来）
+        const bossDmgToPlayer = Math.max(1, base.atk - gameState.def + 1);
+        const maxSafeBossDmg = Math.floor(gameState.maxHp * 0.15);
+
+        // 如果BOSS HP与目标差距过大（>30%），动态调整
+        if (base.hp > targetBossHp * 1.3 || base.hp < targetBossHp * 0.5) {
+            base.hp = targetBossHp;
+        }
+        // 如果BOSS伤害过高，降低攻击力
+        if (bossDmgToPlayer > maxSafeBossDmg) {
+            const atkRatio = Math.max(0.5, maxSafeBossDmg / bossDmgToPlayer);
+            base.atk = Math.max(1, Math.floor(base.atk * atkRatio));
+        }
+    }
+    const e = base;
+    e.maxHp = e.hp; e.currentHp = e.hp;
+    gameState.enemy = e; gameState.inBattle = true;
+    gameState.stats.battles++;
+    battleState.turn = hasTalentEffect('first_strike') ? 'player' : (gameState.spd >= e.spd ? 'player' : 'enemy');
+    document.getElementById('enemyIcon').textContent = e.icon;
+    document.getElementById('battleArea').classList.add('active');
+    document.getElementById('miniGame').classList.remove('active');
+    document.getElementById('searchArea').classList.remove('active');
+    updateBattleUI();
+    addBattleLog('⚔️ 战斗开始！' + gameState.playerName + ' VS ' + e.name);
+    if (e.boss) addBattleLog('【BOSS战：' + e.name + '】', 'damage');
+    // D级天赋「感知」：战斗开始时显示敌人详细属性
+    if (hasTalentEffect('sense')) {
+        addBattleLog('👁️ 感知发动！敌人信息：HP:' + e.hp + ' ATK:' + e.atk + ' DEF:' + e.def + ' SPD:' + e.spd, 'heal');
+    }
+    if (battleState.turn === 'enemy') setTimeout(enemyTurn, 1000);
+    // 快进模式：玩家回合自动攻击
+    if (skipMode && battleState.turn === 'player') {
+        setTimeout(() => { if (gameState.inBattle && battleState.turn === 'player') autoBattleAction(); }, 300);
+    }
+}
+
+function updateBattleUI() {
+    if (!gameState.enemy) return;
+    document.getElementById('enemyName').textContent = gameState.enemy.name;
+    document.getElementById('playerBattleName').textContent = gameState.playerName;
+    document.getElementById('playerHpFill').style.width = Math.max(0, (gameState.hp / gameState.maxHp) * 100) + '%';
+    document.getElementById('playerHpText').textContent = Math.max(0, gameState.hp) + '/' + gameState.maxHp;
+    document.getElementById('enemyHpFill').style.width = Math.max(0, (gameState.enemy.currentHp / gameState.enemy.maxHp) * 100) + '%';
+    document.getElementById('enemyHpText').textContent = Math.max(0, gameState.enemy.currentHp) + '/' + gameState.enemy.maxHp;
+    const sb = document.getElementById('skillBtn');
+    if (gameState.skillCooldown > 0) { sb.disabled = true; sb.querySelector('.label').textContent = '冷却(' + gameState.skillCooldown + ')'; }
+    else { sb.disabled = !getAllTalentEffects().length; sb.querySelector('.label').textContent = getAllTalentEffects().length > 0 ? '天赋技' : '无天赋'; }
+}
+
+function addBattleLog(text, type) {
+    const log = document.getElementById('battleLog');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry ' + (type || '');
+    entry.textContent = text;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+}
+
+function playerAttack() {
+    if (battleState.turn !== 'player' || !gameState.inBattle) return;
+    if (hasTalentEffect('crit_guaranteed') && Math.random() < 0.25) {
+        gameState.enemy.currentHp = 0;
+        addBattleLog('💀 致命一击！' + gameState.enemy.name + '被秒杀！', 'damage');
+        if (checkBattleEnd()) return;
+    }
+    // 超神·万界主宰：必定暴击（伤害x2）
+    let dmg = Math.max(1, gameState.atk - gameState.enemy.def + Math.floor(Math.random() * 5));
+    // 超神·万界主宰：必定暴击（伤害x2，属性已提升100%，此处只做暴击翻倍）
+    if (hasTalentEffect('world_dominate')) dmg *= 2;
+    // SSS·万象归一：天赋效果翻倍（属性已提升60%，此处翻倍伤害）
+    if (hasTalentEffect('omni_double')) dmg *= 2;
+    // S级·命运逆转：伤害翻倍（纯战斗特效）
+    if (hasTalentEffect('double_damage')) dmg *= 2;
+    // C级·剑意初现：攻击附带20%额外伤害（属性已+10%，此处做伤害加成）
+    if (hasTalentEffect('bonus_damage')) dmg = Math.floor(dmg * 1.2);
+    // C级·铁拳：普攻伤害提升25%（属性已+10%，此处做伤害加成）
+    if (hasTalentEffect('punch_up')) dmg = Math.floor(dmg * 1.25);
+    // SS·时空断裂：附加一段无视防御的时空伤害
+    if (hasTalentEffect('void_strike')) {
+        const voidDmg = Math.floor(gameState.atk * 0.5);
+        dmg += voidDmg;
+    }
+    // 超神·创世之光：额外造成敌人最大生命值15%的真实伤害
+    if (hasTalentEffect('genesis_light')) {
+        const trueDmg = Math.floor(gameState.enemy.maxHp * 0.15);
+        dmg += trueDmg;
+    }
+    gameState.enemy.currentHp -= dmg;
+    addBattleLog(gameState.playerName + '攻击，造成' + dmg + '点伤害！', 'damage');
+    // SS·混沌吞噬：吞噬敌人属性
+    if (hasTalentEffect('chaos_devour') && Math.random() < 0.3) {
+        gameState.atk += 1; gameState.def += 1;
+        addBattleLog('「混沌吞噬」触发！永久获得攻击+1、防御+1', 'heal');
+    }
+    if (hasTalentEffect('lifesteal')) {
+        let stealRate = 0.15;
+        if (hasTalentEffect('omni_double')) stealRate = 0.3; // SSS翻倍
+        const h = Math.floor(dmg * stealRate);
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + h);
+        addBattleLog('吸收' + h + '点生命！', 'heal');
+    }
+    battleState.playerDefending = false;
+    if (checkBattleEnd()) return;
+    battleState.turn = 'enemy'; disableActions();
+    setTimeout(enemyTurn, skipMode ? 100 : 1000);
+}
+
+function playerDefend() {
+    if (battleState.turn !== 'player' || !gameState.inBattle) return;
+    battleState.playerDefending = true;
+    addBattleLog(gameState.playerName + '采取防御姿态！');
+    battleState.turn = 'enemy'; disableActions();
+    setTimeout(enemyTurn, skipMode ? 100 : 1000);
+}
+
+function playerDodge() {
+    if (battleState.turn !== 'player' || !gameState.inBattle) return;
+    let chance = 0.4 + (gameState.spd / 100);
+    if (hasTalentEffect('speed_up')) chance += 0.3;
+    if (hasTalentEffect('dodge_up')) chance = Math.min(0.9, chance + 0.3);
+    // 超神·超维感知：闪避率提升至90%
+    if (hasTalentEffect('ultra_sense')) chance = 0.9;
+    if (hasTalentEffect('omni_double')) chance = Math.min(0.95, chance + 0.1); // SSS翻倍
+    const dodged = Math.random() < chance;
+    addBattleLog(dodged ? gameState.playerName + '成功闪避！' : gameState.playerName + '闪避失败！', dodged ? 'heal' : 'miss');
+    // 超神·超维感知：闪避时反伤敌人攻击力200%
+    if (dodged && hasTalentEffect('ultra_sense') && gameState.enemy) {
+        const counterDmg = Math.floor(gameState.atk * 2);
+        gameState.enemy.currentHp -= counterDmg;
+        addBattleLog('「超维感知」反击！造成' + counterDmg + '点伤害！', 'damage');
+        if (checkBattleEnd()) return;
+    }
+    battleState.turn = 'enemy'; disableActions();
+    setTimeout(enemyTurn, skipMode ? 100 : 1000);
+}
+
+// ========== 战斗中使用回复药 ==========
+function playerHeal() {
+    if (battleState.turn !== 'player' || !gameState.inBattle) return;
+    // 从背包中寻找回复类药品（优先小回复药）
+    const healItems = ['heal_large', 'heal_medium', 'heal_small'];
+    let found = null;
+    for (const hid of healItems) {
+        const idx = gameState.inventory.findIndex(it => it.id === hid);
+        if (idx >= 0) { found = { idx, item: gameState.inventory[idx] }; break; }
+    }
+    if (!found) {
+        addBattleLog('没有可用的回复药！', 'miss');
+        return;
+    }
+    const cItem = CONSUMABLE_DB[found.item.id];
+    if (!cItem) return;
+    const healVal = cItem.value || 30;
+    const oldHp = gameState.hp;
+    gameState.hp = Math.min(gameState.maxHp, gameState.hp + healVal);
+    const actual = gameState.hp - oldHp;
+    // 从背包移除
+    gameState.inventory.splice(found.idx, 1);
+    addBattleLog('💊 使用' + cItem.name + '，恢复' + actual + '点生命！', 'heal');
+    updateBattleUI();
+    battleState.turn = 'enemy'; disableActions();
+    setTimeout(enemyTurn, skipMode ? 100 : 1000);
+}
+
+function useSkill() {
+    if (battleState.turn !== 'player' || !gameState.inBattle || gameState.skillCooldown > 0) return;
+    const allEffects = getAllTalentEffects();
+    if (allEffects.length === 0) return;
+    let dmg = gameState.atk * 2;
+    if (hasTalentEffect('atk_up')) dmg = Math.floor(dmg * 1.8);
+    if (hasTalentEffect('all_up')) dmg = Math.floor(dmg * 1.3);
+    if (hasTalentEffect('double_damage')) dmg *= 2;
+    const skillName = getTalentByEffect('atk_up')?.name || getTalentByEffect('all_up')?.name || getTalentByEffect('double_damage')?.name || '天赋技';
+    gameState.enemy.currentHp -= dmg;
+    addBattleLog(gameState.playerName + '使用「' + skillName + '」！造成' + dmg + '点伤害！', 'damage');
+    gameState.skillCooldown = 3;
+    if (checkBattleEnd()) return;
+    battleState.turn = 'enemy'; disableActions();
+    setTimeout(enemyTurn, skipMode ? 100 : 1000);
+}
+
+function enemyTurn() {
+    if (!gameState.inBattle || !gameState.enemy) return;
+    let dmg = Math.max(1, gameState.enemy.atk - gameState.def + Math.floor(Math.random() * 3));
+    if (hasTalentEffect('time_slow')) dmg = Math.floor(dmg * 0.8);
+    if (battleState.playerDefending) dmg = Math.floor(dmg * 0.4);
+    // SSS·逆天改命：30%概率完全免疫
+    if (hasTalentEffect('fate_rewrite') && Math.random() < 0.3) {
+        addBattleLog(gameState.enemy.name + '发起攻击，但被「逆天改命」完全免疫！', 'miss');
+        if (checkBattleEnd()) return;
+        battleState.turn = 'player'; battleState.playerDefending = false;
+        if (gameState.skillCooldown > 0) gameState.skillCooldown--;
+        enableActions(); updateBattleUI();
+        if (skipMode) { setTimeout(() => { if (gameState.inBattle && battleState.turn === 'player') autoBattleAction(); }, skipMode ? 50 : 300); }
+        return;
+    }
+    const r = Math.random();
+    if (r < 0.7) { gameState.hp -= dmg; addBattleLog(gameState.enemy.name + '攻击，造成' + dmg + '点伤害！', 'damage'); }
+    else if (r < 0.9) { dmg = Math.floor(dmg * 1.5); gameState.hp -= dmg; addBattleLog(gameState.enemy.name + '发动重击！造成' + dmg + '点伤害！', 'damage'); }
+    else { addBattleLog(gameState.enemy.name + '蓄力中......', 'miss'); }
+    updateBattleUI();
+    if (hasTalentEffect('regen')) {
+        let regenRate = 0.03;
+        if (hasTalentEffect('omni_double')) regenRate = 0.06; // SSS·万象归一：翻倍
+        const h = Math.floor(gameState.maxHp * regenRate);
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + h);
+        addBattleLog('被动恢复' + h + '点生命！', 'heal');
+        updateBattleUI();
+    }
+    if (gameState.hp <= 0 && hasTalentEffect('shield')) {
+        gameState.hp = 1;
+        addBattleLog('「护体金光」触发！免疫致命伤害！', 'heal');
+        const allT = (gameState.talents || []).concat(gameState.keptTalents || []);
+        const idx = allT.findIndex(t => t.effect === 'shield');
+        if (idx >= 0 && idx < gameState.talents.length) gameState.talents.splice(idx, 1);
+        else if (idx >= 0) gameState.keptTalents.splice(idx - gameState.talents.length, 1);
+        recalculateStats(); updateTalentUI(); updateBattleUI(); return;
+    }
+    if (gameState.hp <= 0 && hasTalentEffect('resurrection')) {
+        gameState.hp = Math.floor(gameState.maxHp * 0.3);
+        addBattleLog('「不死之身」触发！复活！', 'heal');
+        const allT = (gameState.talents || []).concat(gameState.keptTalents || []);
+        const idx = allT.findIndex(t => t.effect === 'resurrection');
+        if (idx >= 0 && idx < gameState.talents.length) gameState.talents.splice(idx, 1);
+        else if (idx >= 0) gameState.keptTalents.splice(idx - gameState.talents.length, 1);
+        recalculateStats(); updateTalentUI(); updateBattleUI(); return;
+    }
+    // SS·不灭意志：复活并全属性提升50%
+    if (gameState.hp <= 0 && hasTalentEffect('immortal_will')) {
+        gameState.hp = Math.floor(gameState.maxHp * 0.5);
+        gameState.atk = Math.floor(gameState.atk * 1.5);
+        gameState.def = Math.floor(gameState.def * 1.5);
+        gameState.maxHp = Math.floor(gameState.maxHp * 1.5);
+        addBattleLog('「不灭意志」触发！复活，全属性提升50%！', 'heal');
+        const allT = (gameState.talents || []).concat(gameState.keptTalents || []);
+        const idx = allT.findIndex(t => t.effect === 'immortal_will');
+        if (idx >= 0 && idx < gameState.talents.length) gameState.talents.splice(idx, 1);
+        else if (idx >= 0) gameState.keptTalents.splice(idx - gameState.talents.length, 1);
+        recalculateStats(); updateTalentUI(); updateBattleUI(); return;
+    }
+    // SSS·无尽轮回：复活恢复80%生命
+    if (gameState.hp <= 0 && hasTalentEffect('endless_cycle')) {
+        gameState.hp = Math.floor(gameState.maxHp * 0.8);
+        addBattleLog('「无尽轮回」触发！复活，恢复80%生命！', 'heal');
+        const allT = (gameState.talents || []).concat(gameState.keptTalents || []);
+        const idx = allT.findIndex(t => t.effect === 'endless_cycle');
+        if (idx >= 0 && idx < gameState.talents.length) gameState.talents.splice(idx, 1);
+        else if (idx >= 0) gameState.keptTalents.splice(idx - gameState.talents.length, 1);
+        recalculateStats(); updateTalentUI(); updateBattleUI(); return;
+    }
+    if (gameState.hp <= 0) { endBattle(false); return; }
+    battleState.turn = 'player'; battleState.playerDefending = false;
+    if (gameState.skillCooldown > 0) gameState.skillCooldown--;
+    enableActions(); updateBattleUI();
+    // 快进模式：玩家回合自动攻击
+    if (skipMode) {
+        setTimeout(() => { if (gameState.inBattle && battleState.turn === 'player') autoBattleAction(); }, skipMode ? 50 : 300);
+    }
+}
+
+function checkBattleEnd() { if (gameState.enemy.currentHp <= 0) { endBattle(true); return true; } return false; }
+
+function endBattle(victory) {
+    gameState.inBattle = false;
+    document.getElementById('battleArea').classList.remove('active');
+    document.getElementById('battleLog').innerHTML = '';
+    if (victory) {
+        gameState.stats.wins++;
+        const baseExp = gameState.enemy.exp;
+        // 经验值受难度加成
+        const expBonus = getExpBonus(gameState.currentWorld);
+        const exp = Math.floor(baseExp * expBonus);
+        gameState.exp += exp;
+        // 获取金币
+        const gold = gameState.enemy.gold || 0;
+        if (gold > 0) gameState.gold += gold;
+        addBattleLog('🎉 战斗胜利！获得' + exp + '经验值！' + (gold > 0 ? '获得' + gold + '金币！' : ''));
+        checkLevelUp(); updatePlayerUI();
+        // buff持续回合-1
+        if (gameState.buffs && gameState.buffs.length > 0) {
+            gameState.buffs = gameState.buffs.filter(b => { b.duration--; return b.duration > 0; });
+            recalculateStats();
+        }
+        // ========== 战斗后掉落物品（世界特色装备 + 补给减少） ==========
+        let dropCount = 0;
+        const world = gameState.currentWorld || 'zombie';
+
+        // 世界装备掉落追踪（确保每种装备至少掉一次）
+        if (!gameState.worldEquipDropTracker) gameState.worldEquipDropTracker = {};
+        if (!gameState.worldEquipDropTracker[world]) gameState.worldEquipDropTracker[world] = {};
+
+        function getMissingEquipSlots() {
+            const tracker = gameState.worldEquipDropTracker[world];
+            const missing = [];
+            if (!tracker.weapon) missing.push('weapons');
+            if (!tracker.armor) missing.push('armors');
+            if (!tracker.accessory) missing.push('accessories');
+            return missing;
+        }
+
+        function markEquipDropped(slotType) {
+            if (!gameState.worldEquipDropTracker[world]) gameState.worldEquipDropTracker[world] = {};
+            gameState.worldEquipDropTracker[world][slotType] = true;
+        }
+
+        // 第一次掉落
+        const dropRoll = Math.random();
+        const missingSlots = getMissingEquipSlots();
+
+        if (dropRoll < 0.25) {
+            // 25% 补气血道具（原50%，减少35%）
+            const healKeys = ['heal_small', 'heal_medium', 'heal_large'];
+            const healWeights = [0.55, 0.30, 0.15];
+            let r = Math.random(), acc = 0, chosenKey = healKeys[0];
+            for (let i = 0; i < healKeys.length; i++) { acc += healWeights[i]; if (r < acc) { chosenKey = healKeys[i]; break; } }
+            const cItem = CONSUMABLE_DB[chosenKey];
+            if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 掉落：' + cItem.name, 'heal'); dropCount++; }
+        } else if (dropRoll < 0.38) {
+            // 13% buff药剂（原18%，略微减少）
+            const buffKeys = ['buff_atk', 'buff_def', 'buff_spd'];
+            const cKey = buffKeys[Math.floor(Math.random() * buffKeys.length)];
+            const cItem = CONSUMABLE_DB[cKey];
+            if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 掉落：' + cItem.name, 'heal'); dropCount++; }
+        } else if (dropRoll < 0.48) {
+            // 10% 永久属性道具（原10%，不变）
+            const perKeys = ['per_atk', 'per_def', 'per_spd', 'per_hp'];
+            const cKey = perKeys[Math.floor(Math.random() * perKeys.length)];
+            const cItem = CONSUMABLE_DB[cKey];
+            if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 掉落：' + cItem.name, 'heal'); dropCount++; }
+        } else {
+            // 52% 世界特色装备（原22%，大幅增加！）
+            let eqSlot = ['weapons', 'armors', 'accessories'][Math.floor(Math.random() * 3)];
+            // 如果缺少某类装备，提高掉落优先级
+            if (missingSlots.length > 0 && Math.random() < 0.6) {
+                eqSlot = missingSlots[Math.floor(Math.random() * missingSlots.length)];
+            }
+            const item = getWorldEquipment(world, eqSlot);
+            if (item) {
+                silentAddItem(item);
+                markEquipDropped(eqSlot);
+                addBattleLog('📦 掉落装备：' + item.name + '（' + item.desc + '）', 'heal');
+                dropCount++;
+            }
+        }
+
+        // 额外掉落（26% → 补气血降为13%）
+        if (Math.random() < 0.26) {
+            const r2 = Math.random();
+            if (r2 < 0.5 && missingSlots.length > 0) {
+                // 缺装备时50%概率补一件
+                const slot = missingSlots[Math.floor(Math.random() * missingSlots.length)];
+                const item = getWorldEquipment(world, slot);
+                if (item) {
+                    silentAddItem(item);
+                    markEquipDropped(slot);
+                    addBattleLog('📦 额外掉落装备：' + item.name, 'heal');
+                    dropCount++;
+                }
+            } else if (r2 < 0.75) {
+                const cItem = CONSUMABLE_DB.heal_small;
+                if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 额外掉落：' + cItem.name, 'heal'); dropCount++; }
+            } else {
+                const perKeys = ['per_atk', 'per_def', 'per_spd', 'per_hp'];
+                const cItem = CONSUMABLE_DB[perKeys[Math.floor(Math.random() * perKeys.length)]];
+                if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 额外掉落：' + cItem.name, 'heal'); dropCount++; }
+            }
+        }
+
+        // BOSS掉落（必掉2-3件，且必为世界特色装备）
+        if (gameState.enemy.boss) {
+            // BOSS必掉武器+防具（各1件，不重复）
+            const slotsToDrop = ['weapons', 'armors'];
+            slotsToDrop.forEach(slot => {
+                const item = getWorldEquipment(world, slot);
+                if (item) {
+                    silentAddItem(item);
+                    markEquipDropped(slot);
+                    addBattleLog('📦 BOSS掉落装备：' + item.name + '（' + item.desc + '）', 'heal');
+                    dropCount++;
+                }
+            });
+            // BOSS 80%概率掉饰品
+            if (Math.random() < 0.80) {
+                const accItem = getWorldEquipment(world, 'accessories');
+                if (accItem) {
+                    silentAddItem(accItem);
+                    markEquipDropped('accessory');
+                    addBattleLog('📦 BOSS掉落装备：' + accItem.name + '（' + accItem.desc + '）', 'heal');
+                    dropCount++;
+                }
+            }
+            // BOSS 50%概率掉圣水（原60%）
+            if (Math.random() < 0.50) {
+                const holy = CONSUMABLE_DB.heal_full;
+                if (holy) { silentAddItem({ ...holy }); addBattleLog('📦 BOSS掉落：' + holy.name, 'heal'); dropCount++; }
+            }
+            // BOSS 60%概率掉永久属性道具
+            if (Math.random() < 0.60) {
+                const perKeys = ['per_atk', 'per_def', 'per_spd', 'per_hp'];
+                const cItem = CONSUMABLE_DB[perKeys[Math.floor(Math.random() * perKeys.length)]];
+                if (cItem) { silentAddItem({ ...cItem }); addBattleLog('📦 BOSS掉落：' + cItem.name, 'heal'); dropCount++; }
+            }
+        }
+        if (dropCount > 1) addBattleLog('✨ 共获得' + dropCount + '件物品！', 'heal');
+        updatePlayerUI();
+        if (typeof onBattleWin === 'function') onBattleWin();
+        // 生存模式回调
+        if (window._survivePending) {
+            window._survivePending = false;
+            if (typeof checkSurviveEnd === 'function') {
+                setTimeout(checkSurviveEnd, 800);
+                return;
+            }
+        }
+        if (pendingBattleNext) {
+            const n = pendingBattleNext; pendingBattleNext = null;
+            setTimeout(() => loadStage(n), 1500);
+        }
+    } else { showGameOver(false); }
+}
+
+function disableActions() { document.querySelectorAll('.action-btn').forEach(b => b.disabled = true); }
+
+function enableActions() { document.querySelectorAll('.action-btn').forEach(b => b.disabled = false); }
+
+// ========== 快进模式自动战斗 ==========
+function autoBattleAction() {
+    if (!gameState.inBattle || battleState.turn !== 'player' || !skipMode) return;
+    // 优先使用天赋技（冷却完毕且有天赋效果时）
+    if (gameState.skillCooldown <= 0 && getAllTalentEffects().length > 0) {
+        useSkill();
+    } else {
+        playerAttack();
+    }
+}
+
+
+</script>
+<script>
+// ========== minigames.js ==========
+// 万界行者 - 小游戏系统
+function startPuzzle(stage) {
+    const mg = document.getElementById('miniGame');
+    const area = document.getElementById('puzzleArea');
+    const title = document.getElementById('miniGameTitle');
+    mg.classList.add('active');
+    document.getElementById('searchArea').classList.remove('active');
+    
+    let puzzle;
+    if (stage.puzzle) {
+        const bank = puzzleBank[stage.puzzle.type] || puzzleBank.riddle;
+        const idx = stage.puzzle.index || 0;
+        puzzle = bank[idx % bank.length];
+    }
+    if (!puzzle) { loadStage(stage.choices[0].nextStage); return; }
+    
+    title.textContent = '🧩 ' + (stage.puzzle.type === 'riddle' ? '谜题' : stage.puzzle.type === 'code' ? '解码' : '计算');
+    
+    area.innerHTML = '<p style="color:#d0d0ff;line-height:1.8;margin:15px 0;">' + puzzle.q + '</p>' +
+        '<p class="puzzle-hint">提示：' + puzzle.hint + '</p>' +
+        '<input class="puzzle-input" id="puzzleInput" placeholder="输入你的答案..." autocomplete="off">' +
+        '<br><button class="puzzle-submit" onclick="submitPuzzle()">提交答案</button>' +
+        '<div id="puzzleResult" style="margin-top:15px;"></div>';
+    
+    window._currentPuzzle = puzzle;
+    window._currentStage = stage;
+    setTimeout(() => document.getElementById('puzzleInput')?.focus(), 300);
+}
+
+function submitPuzzle() {
+    const input = document.getElementById('puzzleInput');
+    const result = document.getElementById('puzzleResult');
+    const answer = input.value.trim();
+    const puzzle = window._currentPuzzle;
+    const stage = window._currentStage;
+    
+    if (answer.toLowerCase() === puzzle.a.toLowerCase()) {
+        result.innerHTML = '<span style="color:#6f6;font-size:1.1em;">✅ 正确！</span>';
+        document.getElementById('miniGame').classList.remove('active');
+        document.getElementById('storyText').innerHTML += '<br>' + (stage.puzzleSuccess || '<span class="success">解密成功！</span>');
+        if (stage.expGain) { gameState.exp += stage.expGain; checkLevelUp(); }
+        if (stage.onComplete) stage.onComplete();
+        updatePlayerUI();
+        setTimeout(() => showChoices(stage.choices), 1000);
+    } else {
+        result.innerHTML = '<span style="color:#f66;font-size:1.1em;">❌ 答案错误！</span>';
+        if (stage.puzzleFailDamage) {
+            gameState.hp -= stage.puzzleFailDamage;
+            updatePlayerUI();
+            if (gameState.hp <= 0) { document.getElementById('miniGame').classList.remove('active'); showGameOver(false); return; }
+        }
+        if (stage.puzzleFail) {
+            document.getElementById('storyText').innerHTML += '<br>' + stage.puzzleFail;
+            document.getElementById('miniGame').classList.remove('active');
+            if (stage.puzzleFailNext) {
+                setTimeout(() => loadStage(stage.puzzleFailNext), 1000);
+            }
+        }
+    }
+}
+
+function startSearch(stage) {
+    const sa = document.getElementById('searchArea');
+    const grid = document.getElementById('searchGrid');
+    const info = document.getElementById('searchInfo');
+    const title = document.getElementById('searchTitle');
+    sa.classList.add('active');
+    document.getElementById('miniGame').classList.remove('active');
+    
+    const cfg = stage.search;
+    title.textContent = '🔍 搜索：' + stage.name;
+    
+    window._searchState = {
+        stage: stage, found: 0, total: cfg.total, targets: cfg.targets,
+        traps: cfg.traps, revealed: new Set(), foundSet: new Set(), failed: false
+    };
+    
+    // 生成格子
+    const positions = [];
+    for (let i = 0; i < cfg.total; i++) positions.push(i);
+    // 随机放置目标和陷阱
+    const shuffled = positions.sort(() => Math.random() - 0.5);
+    window._searchState.targetPositions = new Set(shuffled.slice(0, cfg.targets));
+    window._searchState.trapPositions = new Set(shuffled.slice(cfg.targets, cfg.targets + cfg.traps));
+    
+    grid.innerHTML = '';
+    for (let i = 0; i < cfg.total; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'search-cell';
+        cell.textContent = '❓';
+        cell.dataset.idx = i;
+        cell.onclick = () => revealSearchCell(i, cell);
+        grid.appendChild(cell);
+    }
+    
+    updateSearchInfo();
+}
+
+function updateSearchInfo() {
+    const s = window._searchState;
+    if (!s) return;
+    document.getElementById('searchInfo').textContent = 
+        '进度：' + s.found + '/' + s.targets + ' | 剩余格子：' + (s.total - s.revealed.size);
+}
+
+function revealSearchCell(idx, cell) {
+    const s = window._searchState;
+    if (!s || s.failed || s.revealed.has(idx)) return;
+    s.revealed.add(idx);
+    
+    if (s.targetPositions.has(idx)) {
+        cell.className = 'search-cell found';
+        cell.textContent = s.stage.searchItem.icon;
+        s.found++;
+        updateSearchInfo();
+        if (s.found >= s.targets) {
+            document.getElementById('searchArea').classList.remove('active');
+            document.getElementById('storyText').innerHTML += '<br>' + (s.stage.searchSuccess || '<span class="success">收集完毕！</span>');
+            if (s.stage.expGain) { gameState.exp += s.stage.expGain; checkLevelUp(); }
+            if (s.stage.onComplete) s.stage.onComplete();
+            updatePlayerUI();
+            setTimeout(() => showChoices(s.stage.choices), 1000);
+        }
+    } else if (s.trapPositions.has(idx)) {
+        cell.className = 'search-cell trap';
+        cell.textContent = '💥';
+        gameState.hp -= 15;
+        updatePlayerUI();
+        updateSearchInfo();
+        if (gameState.hp <= 0) {
+            document.getElementById('searchArea').classList.remove('active');
+            showGameOver(false);
+        }
+    } else {
+        cell.className = 'search-cell empty';
+        cell.textContent = '📭';
+        updateSearchInfo();
+    }
+}
+
+function startStealth(stage) {
+    const cfg = stage.stealth;
+    window._stealthState = { stage: stage, current: 0, total: cfg.checks, failEnemy: cfg.failEnemy };
+    runStealthCheck();
+}
+
+function runStealthCheck() {
+    const s = window._stealthState;
+    if (!s) return;
+    
+    const storyText = document.getElementById('storyText');
+    const chance = 0.4 + (gameState.spd / 150);
+    
+    if (Math.random() < chance) {
+        // 成功
+        s.current++;
+        if (s.current >= s.total) {
+            storyText.innerHTML += '<br><span class="success">✓ 潜行成功（' + s.current + '/' + s.total + '）</span>';
+            document.getElementById('storyText').innerHTML += '<br>' + (s.stage.stealthSuccess || '<span class="success">潜行成功！</span>');
+            if (s.stage.expGain) { gameState.exp += s.stage.expGain; checkLevelUp(); }
+            if (s.stage.onComplete) s.stage.onComplete();
+            updatePlayerUI();
+            setTimeout(() => showChoices(s.stage.choices), 800);
+        } else {
+            storyText.innerHTML += '<br><span class="success">✓ 第' + s.current + '次潜行成功</span>';
+            setTimeout(() => runStealthCheck(), 800);
+        }
+    } else {
+        // 失败
+        storyText.innerHTML += '<br><span class="danger">✗ 潜行失败！被发现！</span>';
+        if (s.stage.stealthFail) storyText.innerHTML += '<br>' + s.stage.stealthFail;
+        if (s.failEnemy) {
+            pendingBattleNext = s.stage.choices ? s.stage.choices[0].nextStage : null;
+            if (s.stage.stealthFail && s.stage.stealthFailNext) {
+                pendingBattleNext = s.stage.stealthFailNext;
+            }
+            startBattle(s.failEnemy);
+        }
+    }
+}
+
+function startRescue(stage) {
+    const cfg = stage.rescue;
+    const storyText = document.getElementById('storyText');
+    
+    storyText.innerHTML += '<br><span class="system">【点击按钮快速解救！限时' + cfg.timeLimit + '秒】</span>';
+    
+    let rescued = 0;
+    let timeLeft = cfg.timeLimit;
+    
+    const choicesArea = document.getElementById('choicesArea');
+    choicesArea.innerHTML = '';
+    
+    // 生成解救按钮
+    for (let i = 0; i < cfg.total; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.style.animation = 'fadeIn 0.5s';
+        btn.innerHTML = '<span class="num">🆘</span>解救第' + (i+1) + '名被困者';
+        btn.dataset.idx = i;
+        btn.onclick = function() {
+            if (this.disabled) return;
+            this.disabled = true;
+            this.style.opacity = '0.4';
+            rescued++;
+            this.innerHTML = '<span class="num">✅</span>已解救！';
+            storyText.innerHTML += '<br><span class="success">解救成功！（' + rescued + '/' + cfg.required + '）</span>';
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + 20);
+            updatePlayerUI();
+            if (rescued >= cfg.required) {
+                clearInterval(timer);
+                finishRescue(stage, rescued, true);
+            }
+        };
+        choicesArea.appendChild(btn);
+    }
+    
+    // 计时器
+    const timerInfo = document.createElement('div');
+    timerInfo.id = 'rescueTimer';
+    timerInfo.style.cssText = 'text-align:center;color:#fa6;font-size:1.2em;margin:10px 0;';
+    timerInfo.textContent = '剩余时间：' + timeLeft + '秒';
+    choicesArea.insertBefore(timerInfo, choicesArea.firstChild);
+    
+    const timer = setInterval(() => {
+        timeLeft--;
+        timerInfo.textContent = '剩余时间：' + timeLeft + '秒';
+        if (timeLeft <= 5) timerInfo.style.color = '#f66';
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            finishRescue(stage, rescued, rescued >= cfg.required);
+        }
+    }, 1000);
+    
+    window._rescueTimer = timer;
+}
+
+function finishRescue(stage, rescued, success) {
+    if (window._rescueTimer) clearInterval(window._rescueTimer);
+    
+    if (success) {
+        document.getElementById('storyText').innerHTML += '<br>' + (stage.rescueSuccess || '<span class="success">营救成功！</span>');
+        if (stage.expGain) { gameState.exp += stage.expGain; checkLevelUp(); }
+        if (stage.onComplete) stage.onComplete();
+        updatePlayerUI();
+        setTimeout(() => showChoices(stage.choices), 1000);
+    } else {
+        document.getElementById('storyText').innerHTML += '<br><span class="danger">时间耗尽！营救失败！</span>';
+        showGameOver(false);
+    }
+}
+
+function startSurvive(stage) {
+    const cfg = stage.survive;
+    window._surviveState = { stage: stage, current: 0, total: cfg.waves, enemies: cfg.enemies };
+    runSurviveWave();
+}
+
+function runSurviveWave() {
+    const s = window._surviveState;
+    if (!s) return;
+    
+    s.current++;
+    document.getElementById('storyText').innerHTML += '<br><span class="danger">【第' + s.current + '/' + s.total + '波攻击！】</span>';
+    
+    const enemyType = s.enemies[Math.min(s.current - 1, s.enemies.length - 1)];
+    pendingBattleNext = '__survive_next__';
+    window._survivePending = true;
+    startBattle(enemyType);
+}
+
+function checkSurviveEnd() {
+    const s = window._surviveState;
+    if (!s) return;
+    
+    if (s.current >= s.total) {
+        window._survivePending = false;
+        document.getElementById('storyText').innerHTML += '<br>' + (s.stage.surviveSuccess || '<span class="success">生存成功！</span>');
+        if (s.stage.expGain) { gameState.exp += s.stage.expGain; checkLevelUp(); }
+        if (s.stage.onComplete) s.stage.onComplete();
+        updatePlayerUI();
+        setTimeout(() => showChoices(s.stage.choices), 1000);
+    } else {
+        setTimeout(() => runSurviveWave(), 1000);
+    }
+}
+
+
+</script>
+<script>
+// ========== stages.js ==========
+// 万界行者 - 关卡引擎
+
+// ========== 天赋世界抽取辅助 ==========
+
+// 根据天赋对象反查其等级（talentPool中天赋对象不含rank字段）
+function getRankFromPool(talent) {
+    for (const [rank, pool] of Object.entries(talentPool)) {
+        if (pool.some(t => t.name === talent.name && t.effect === talent.effect)) return rank;
+    }
+    return 'D';
+}
+
+// 世界内触发天赋抽取（最多3次/世界）
+function tryWorldTalentDraw(stage) {
+    if (!stage.world || !stage.drawTalent) return false;
+    const wId = stage.world;
+    const drawsLeft = 3 - (gameState.worldTalentDraws[wId] || 0);
+    if (drawsLeft <= 0) {
+        // 不再抽取，直接显示关卡内容
+        return false;
+    }
+    // 世界天赋抽取
+    drawTalent(stage.talentRank || 'D', true);
+    return true;
+}
+
+// 世界通关时弹出天赋保留选择
+function showTalentKeepUI(worldId) {
+    const pool = gameState.worldTalentPool[worldId] || [];
+    if (pool.length === 0) {
+        // 没有天赋可保留，直接进入系统空间
+        loadStage('ending');
+        return;
+    }
+
+    const storyText = document.getElementById('storyText');
+    storyText.innerHTML += '<br><span class="system">【世界天赋结算】</span>';
+    storyText.innerHTML += '<br><span class="highlight">「' + getWorldName(worldId) + '」世界结束！你可以从以下天赋中保留一个：</span>';
+    storyText.innerHTML += '<br><span class="system">（保留的天赋将永久生效，与已有天赋叠加）</span>';
+
+    const choicesArea = document.getElementById('choicesArea');
+    choicesArea.innerHTML = '';
+
+    pool.forEach((t, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = '<span class="num">' + (i + 1) + '</span>' +
+            '<span style="font-size:1.5em;margin-right:8px;">' + t.icon + '</span>' +
+            '<strong>' + t.name + '</strong>（' + t.desc + '）';
+        btn.onclick = () => {
+            // 保留选中天赋（补上rank属性，talentPool中天赋对象不含此字段）
+            if (!t.rank) t.rank = getRankFromPool(t);
+            gameState.keptTalents.push(t);
+            // 清空本世界天赋池
+            gameState.worldTalentPool[worldId] = [];
+            recalculateStats();
+            updateTalentUI();
+            updatePlayerUI();
+            showSpiritDialog('保留了天赋「' + t.name + '」！');
+            choicesArea.innerHTML = '';
+            // 进入系统空间
+            setTimeout(() => loadStage('ending'), 1000);
+        };
+        choicesArea.appendChild(btn);
+    });
+
+    // 添加"不保留"选项
+    const noBtn = document.createElement('button');
+    noBtn.className = 'choice-btn';
+    noBtn.style.opacity = '0.6';
+    noBtn.innerHTML = '<span class="num">0</span>不保留任何天赋';
+    noBtn.onclick = () => {
+        gameState.worldTalentPool[worldId] = [];
+        showSpiritDialog('天赋已全部丢弃。');
+        choicesArea.innerHTML = '';
+        setTimeout(() => loadStage('ending'), 1000);
+    };
+    choicesArea.appendChild(noBtn);
+}
+
+// 世界通关逻辑：在战斗胜利后调用
+function onBattleWin() {
+    const c = stages[gameState.stageId];
+    if (!c) return;
+
+    // 如果关卡标记为世界通关
+    if (c.isClear) {
+        if (c.world && !gameState.completedWorlds.includes(c.world)) {
+            gameState.completedWorlds.push(c.world);
+        }
+        const wi = WORLD_ORDER.indexOf(c.world);
+        if (wi < WORLD_ORDER.length - 1) {
+            setTimeout(function() {
+                addBattleLog('🎉 恭喜通关 ' + getWorldName(c.world) + '！');
+                addBattleLog('✨ 新世界 ' + getWorldName(WORLD_ORDER[wi + 1]) + ' 已解锁！');
+            }, 1000);
+        } else if (gameState.completedWorlds.length >= 4) {
+            setTimeout(function() {
+                addBattleLog('🏆 通关所有世界！你是真正的万界行者！');
+            }, 1000);
+        }
+        autoSave();
+        // 世界通关后触发天赋保留选择
+        if (c.world && (gameState.worldTalentPool[c.world] || []).length > 0) {
+            setTimeout(function() { showTalentKeepUI(c.world); }, 2000);
+        }
+    }
+
+    // 如果当前关卡有 nextStage（beforeBattle 关卡自动跳转）
+    if (!pendingBattleNext) {
+        // 优先使用 choices 中定义的 nextStage
+        if (c.choices && c.choices[0] && c.choices[0].nextStage) {
+            pendingBattleNext = c.choices[0].nextStage;
+        }
+        // 否则使用 getNextStageKey 自动推断
+        else if (typeof getNextStageKey === 'function') {
+            pendingBattleNext = getNextStageKey(gameState.stageId);
+        }
+    }
+}
+
+function loadStage(stageId) {
+    const stage = stages[stageId];
+    if (!stage) { console.error('Stage not found:', stageId); return; }
+    
+    // 系统空间特殊处理
+    if (stage.isSystemSpace) {
+        showSystemSpace();
+        return;
+    }
+    
+    currentStageData = stage;
+    gameState.stageId = stageId;
+    if (stage.world) gameState.currentWorld = stage.world;
+    if (stage.world && gameState.worldProgress[stage.world] !== undefined) {
+        gameState.worldProgress[stage.world] = Math.max(gameState.worldProgress[stage.world], stage.stageNum);
+    }
+    
+    // 世界通关自动标记
+    if (stage.isClear && stage.world && !gameState.completedWorlds.includes(stage.world)) {
+        gameState.completedWorlds.push(stage.world);
+        autoSave();
+    }
+    
+    document.getElementById('systemPanel').classList.add('active');
+    document.getElementById('systemSpace').classList.remove('active');
+    document.getElementById('miniGame').classList.remove('active');
+    document.getElementById('searchArea').classList.remove('active');
+    updatePlayerUI();
+    
+    // 显示关卡信息
+    if (stage.world && stage.world !== 'end') {
+        document.getElementById('stageInfo').classList.add('active');
+        document.getElementById('stageNum').textContent = stage.worldName + ' · 第' + stage.stageNum + '关';
+        document.getElementById('stageName').textContent = stage.name;
+        const modeTag = document.getElementById('stageModeTag');
+        if (stage.mode && MODES[stage.mode]) {
+            modeTag.innerHTML = '<span class="stage-mode-tag ' + MODES[stage.mode].cls + '">' + MODES[stage.mode].label + '</span>';
+        } else { modeTag.innerHTML = ''; }
+    } else {
+        document.getElementById('stageInfo').classList.remove('active');
+    }
+    
+    if (stage.drawTalent) {
+        // 先尝试世界天赋抽取（每世界最多3次）
+        if (!tryWorldTalentDraw(stage)) {
+            // 已用完3次，直接显示关卡内容
+            showStageContent(stage);
+        }
+        return;
+    }
+    
+    // 每关开始时赠送基础补给（非战斗关且非系统空间）
+    if (stage.world && stage.world !== 'end' && !stage.isSystemSpace && stage.stageNum > 0) {
+        supplyPlayer();
+    }
+    
+    showStageContent(stage);
+}
+
+function showStageContent(stage) {
+    // 战斗关（beforeBattle）
+    if (stage.beforeBattle && stage.battleEnemy) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            if (stage.expGain) { gameState.exp += stage.expGain; checkLevelUp(); }
+            if (stage.item) showItemPopup(stage.item);
+            if (stage.onComplete) stage.onComplete();
+            updatePlayerUI();
+            setTimeout(() => startBattle(stage.battleEnemy), 500);
+        });
+        return;
+    }
+    
+    // 解密关
+    if (stage.mode === 'puzzle' && stage.puzzle) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            updatePlayerUI();
+            startPuzzle(stage);
+        });
+        return;
+    }
+    
+    // 寻物关
+    if (stage.mode === 'find' && stage.search) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            updatePlayerUI();
+            startSearch(stage);
+        });
+        return;
+    }
+    
+    // 潜行关
+    if (stage.mode === 'stealth' && stage.stealth) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            updatePlayerUI();
+            startStealth(stage);
+        });
+        return;
+    }
+    
+    // 救护关
+    if (stage.mode === 'rescue' && stage.rescue) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            updatePlayerUI();
+            startRescue(stage);
+        });
+        return;
+    }
+    
+    // 生存关
+    if (stage.mode === 'survive' && stage.survive) {
+        typeWriter(stage.story, document.getElementById('storyText'), () => {
+            if (stage.spirit) showSpiritDialog(stage.spirit);
+            updatePlayerUI();
+            startSurvive(stage);
+        });
+        return;
+    }
+    
+    // 普通关卡（战斗/交流）
+    typeWriter(stage.story, document.getElementById('storyText'), () => {
+        if (stage.spirit) showSpiritDialog(stage.spirit);
+        if (stage.expGain) { gameState.exp += stage.expGain; checkLevelUp(); }
+        if (stage.item) showItemPopup(stage.item);
+        if (stage.onComplete) stage.onComplete();
+        updatePlayerUI();
+        if (stage.choices && stage.choices.length > 0) showChoices(stage.choices);
+        if (stage.isEnding) showEnding();
+    });
+}
+
+function showSystemSpace() {
+    document.getElementById('systemSpace').classList.add('active');
+    document.getElementById('stageInfo').classList.remove('active');
+    document.getElementById('choicesArea').innerHTML = '';
+    document.getElementById('miniGame').classList.remove('active');
+    document.getElementById('searchArea').classList.remove('active');
+    document.getElementById('storyText').innerHTML = '<span class="system">【欢迎回到系统空间】</span><br><br>在这里你可以休整恢复，或选择进入下一个世界。<br><br>已完成的世界可以<span class="highlight">重新进入</span>，体验不同的路线和结局。<br><br><span class="heal-text">进入系统空间，生命已恢复30%。</span>';
+    
+    // 进入系统空间自动恢复30%生命
+    if (gameState.hp < gameState.maxHp) {
+        const recoverAmount = Math.floor(gameState.maxHp * 0.3);
+        gameState.hp = Math.min(gameState.maxHp, gameState.hp + recoverAmount);
+    }
+    
+    const selector = document.getElementById('worldSelector');
+    selector.innerHTML = '';
+    
+    const worldOrder = WORLD_ORDER;
+    worldOrder.forEach((wId, idx) => {
+        const w = WORLDS[wId];
+        const completed = gameState.completedWorlds.includes(wId);
+        const unlocked = idx === 0 || gameState.completedWorlds.includes(worldOrder[idx - 1]);
+        const isCurrent = !completed && unlocked;
+        
+        const div = document.createElement('div');
+        div.className = 'world-option' + (completed ? ' completed' : '') + (!unlocked ? ' locked' : '') + (isCurrent ? ' current' : '');
+        
+        const statusText = completed ? '✅ 已通关' : (unlocked ? '🔓 可进入' : '🔒 未解锁');
+        const statusClass = completed ? 'done' : (unlocked ? 'available' : 'locked-st');
+        const stagesDone = gameState.worldProgress[wId] || 0;
+        
+        div.innerHTML = '<div class="world-icon">' + w.icon + '</div>' +
+            '<div class="world-title">' + w.name + '</div>' +
+            '<div class="world-desc">' + w.desc + '</div>' +
+            '<div style="color:#88a;font-size:0.8em;margin-top:5px;">难度：' + getDifficulty(wId) + ' | ' + getTotalStages(wId) + '关</div>' +
+            '<div style="color:#88a;font-size:0.8em;">进度：' + stagesDone + '/' + getTotalStages(wId) + '</div>' +
+            '<div class="world-status ' + statusClass + '">' + statusText + '</div>';
+        
+        if (unlocked) {
+            div.onclick = () => {
+                var entryKey = wId + '_intro';
+                if (completed) {
+                    showDifficultyPanel(wId, w.name, entryKey);
+                } else {
+                    loadStage(entryKey);
+                }
+            };
+        }
+        
+        selector.appendChild(div);
+    });
+    
+    // 检查是否全部通关
+    if (gameState.completedWorlds.length === 4) {
+        const endDiv = document.createElement('div');
+        endDiv.className = 'world-option current';
+        endDiv.style.border = '2px solid #ff6';
+        endDiv.innerHTML = '<div class="world-icon">🏆</div>' +
+            '<div class="world-title">真结局</div>' +
+            '<div class="world-desc">四个世界全部通关，解锁最终结局</div>' +
+            '<div class="world-status available">🔓 已解锁</div>';
+        endDiv.onclick = () => loadStage('true_ending');
+        selector.appendChild(endDiv);
+    }
+    
+    updatePlayerUI();
+    autoSave();
+    
+    // ========== 休息恢复按钮 ==========
+    const restArea = document.createElement('div');
+    restArea.id = 'restArea';
+    restArea.style.cssText = 'text-align:center;margin:20px 0;padding:15px;background:rgba(20,40,60,0.6);border-radius:12px;border:1px solid #335;';
+    restArea.innerHTML = '<div id="restInfo" style="color:#8af;font-size:0.9em;margin-bottom:10px;">当前生命：' + gameState.hp + '/' + gameState.maxHp + '</div>' +
+        '<button id="restBtn" class="choice-btn" style="background:linear-gradient(135deg,#1a4a3a,#0a3a2a);border:1px solid #3a7;color:#6f6;padding:10px 30px;border-radius:8px;cursor:pointer;font-size:1em;">🛏️ 休息恢复（缓慢回复气血）</button>' +
+        '<div id="restProgress" style="color:#5a5;font-size:0.8em;margin-top:8px;display:none;">休息中...</div>';
+    selector.parentNode.insertBefore(restArea, selector.nextSibling);
+    
+    document.getElementById('restBtn').onclick = function() {
+        if (gameState.hp >= gameState.maxHp) {
+            document.getElementById('restProgress').style.display = 'block';
+            document.getElementById('restProgress').textContent = '生命已满，无需休息。';
+            return;
+        }
+        document.getElementById('restBtn').disabled = true;
+        document.getElementById('restBtn').style.opacity = '0.5';
+        document.getElementById('restProgress').style.display = 'block';
+        
+        const restInterval = setInterval(() => {
+            if (gameState.hp >= gameState.maxHp) {
+                clearInterval(restInterval);
+                document.getElementById('restBtn').disabled = false;
+                document.getElementById('restBtn').style.opacity = '1';
+                document.getElementById('restProgress').textContent = '休息完毕，生命已完全恢复！';
+                gameState.hp = gameState.maxHp;
+                updatePlayerUI();
+                document.getElementById('restInfo').textContent = '当前生命：' + gameState.hp + '/' + gameState.maxHp;
+                autoSave();
+                return;
+            }
+            // 每秒恢复5%最大生命
+            const heal = Math.max(1, Math.floor(gameState.maxHp * 0.05));
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + heal);
+            updatePlayerUI();
+            document.getElementById('restInfo').textContent = '当前生命：' + gameState.hp + '/' + gameState.maxHp;
+            document.getElementById('restProgress').textContent = '休息中... 每秒恢复' + heal + '点气血（' + Math.floor(gameState.hp / gameState.maxHp * 100) + '%）';
+        }, 1000);
+    };
+}
+
+function restFull() {
+    gameState.hp = gameState.maxHp;
+    updatePlayerUI();
+    document.getElementById('storyText').innerHTML += '<br><span class="success">【完全恢复！生命值已满】</span>';
+}
+
+function restPartial() {
+    const heal = Math.floor(gameState.maxHp * 0.5);
+    gameState.hp = Math.min(gameState.maxHp, gameState.hp + heal);
+    updatePlayerUI();
+    document.getElementById('storyText').innerHTML += '<br><span class="success">【短暂休息！恢复' + heal + '点生命值】</span>';
+}
+
+// ========== 每关补给系统 ==========
+// 每关开始时自动补充基础物资
+function supplyPlayer() {
+    if (typeof CONSUMABLE_DB === 'undefined') return;
+    
+    // 背包满则不补给
+    if (gameState.inventory.length >= gameState.maxInventory) return;
+    
+    // 补给：小回复药x2
+    const healSmall = CONSUMABLE_DB.heal_small;
+    if (healSmall) {
+        gameState.inventory.push({ ...healSmall, uid: Date.now() + Math.random() });
+        gameState.inventory.push({ ...healSmall, uid: Date.now() + Math.random() + 1 });
+    }
+    
+    // 每3关额外补给1瓶中回复药
+    if (gameState.stageId) {
+        const stageObj = stages[gameState.stageId];
+        if (stageObj && stageObj.stageNum > 0 && stageObj.stageNum % 3 === 0) {
+            const healMedium = CONSUMABLE_DB.heal_medium;
+            if (healMedium && gameState.inventory.length < gameState.maxInventory) {
+                gameState.inventory.push({ ...healMedium, uid: Date.now() + Math.random() + 2 });
+            }
+        }
+    }
+    
+    updatePlayerUI();
+}
+
+// ========== 战斗掉落静默添加（不弹窗打断战斗流） ==========
+function silentAddItem(item) {
+    if (gameState.inventory.length >= gameState.maxInventory) {
+        // 背包满时：如果掉落的是回复药，直接使用恢复生命
+        if (item.subtype === 'heal' || item.effect === 'heal') {
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + (item.value || 30));
+            addBattleLog('📦 背包已满，' + item.name + '自动使用！恢复' + (item.value || 30) + 'HP', 'heal');
+            return true;
+        }
+        // 背包满时：掉落装备直接自动装备（如果当前槽位为空或更好）
+        if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
+            const slot = item.type;
+            const equipped = gameState.equipment[slot];
+            if (!equipped || (item.value > equipped.value)) {
+                if (equipped) gameState.inventory.push(equipped);
+                gameState.equipment[slot] = item;
+                recalculateStats();
+                addBattleLog('📦 背包已满，自动装备：' + item.name + '（' + item.desc + '）', 'heal');
+                return true;
+            }
+        }
+        addBattleLog('📦 背包已满，' + item.name + '遗失了...', 'miss');
+        return false;
+    }
+    gameState.inventory.push({ ...item, uid: Date.now() + Math.random() });
+    return true;
+}
+
+// ========== 难度选择面板（仅已通关世界可用） ==========
+function showDifficultyPanel(worldId, worldName, entryKey) {
+    if (!gameState.worldDifficulty) gameState.worldDifficulty = {};
+    const currentDiff = gameState.worldDifficulty[worldId] || 'normal';
+    const diffKeys = ['normal', 'hard', 'nightmare', 'hell'];
+    // 计算当前等级的额外系数
+    const levelBonus = Math.floor((gameState.level || 1) / 10) * 0.05;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'difficultyOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+    let optionsHtml = '';
+    diffKeys.forEach(dk => {
+        const d = DIFFICULTY_CONFIG[dk];
+        const mult = Math.min(2.0, d.multiplier + levelBonus);
+        const selected = dk === currentDiff;
+        optionsHtml += '<div class="diff-option' + (selected ? ' selected' : '') + '" data-diff="' + dk + '" style="border:2px solid ' + (selected ? '#f90' : '#555') + ';border-radius:8px;padding:12px;margin:6px 0;cursor:pointer;background:' + (selected ? 'rgba(255,153,0,0.15)' : 'rgba(255,255,255,0.05)') + ';transition:all 0.2s;">' +
+            '<div style="font-size:1.1em;">' + d.icon + ' ' + d.name + '</div>' +
+            '<div style="font-size:0.8em;color:#aaa;">敌人力度：' + Math.round(mult * 100) + '% · 经验：' + Math.round(d.expBonus * 100) + '%</div>' +
+            '<div style="font-size:0.75em;color:#888;">' + d.desc + '</div>' +
+            '</div>';
+    });
+
+    overlay.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid #f90;border-radius:16px;padding:24px;max-width:360px;width:90%;max-height:80vh;overflow-y:auto;">' +
+        '<div style="text-align:center;margin-bottom:16px;">' +
+        '<div style="font-size:1.3em;color:#f90;">⚔️ 选择难度</div>' +
+        '<div style="font-size:0.9em;color:#aaa;">重新进入「' + worldName + '」</div>' +
+        '</div>' +
+        '<div id="diffOptions">' + optionsHtml + '</div>' +
+        '<div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">' +
+        '<button id="diffCancel" style="padding:8px 24px;border-radius:6px;border:1px solid #666;background:rgba(255,255,255,0.05);color:#ccc;cursor:pointer;">取消</button>' +
+        '<button id="diffConfirm" style="padding:8px 24px;border-radius:6px;border:1px solid #f90;background:rgba(255,153,0,0.2);color:#f90;cursor:pointer;font-weight:bold;">开始</button>' +
+        '</div>' +
+        '</div>';
+
+    document.body.appendChild(overlay);
+
+    let selectedDiff = currentDiff;
+    overlay.querySelectorAll('.diff-option').forEach(opt => {
+        opt.onmouseenter = () => { if (opt.dataset.diff !== selectedDiff) opt.style.borderColor = '#888'; };
+        opt.onmouseleave = () => { if (opt.dataset.diff !== selectedDiff) opt.style.borderColor = '#555'; };
+        opt.onclick = () => {
+            selectedDiff = opt.dataset.diff;
+            overlay.querySelectorAll('.diff-option').forEach(o => {
+                const isSel = o.dataset.diff === selectedDiff;
+                o.style.borderColor = isSel ? '#f90' : '#555';
+                o.style.background = isSel ? 'rgba(255,153,0,0.15)' : 'rgba(255,255,255,0.05)';
+                o.classList.toggle('selected', isSel);
+            });
+        };
+    });
+    document.getElementById('diffCancel').onclick = () => document.body.removeChild(overlay);
+    document.getElementById('diffConfirm').onclick = () => {
+        gameState.worldDifficulty[worldId] = selectedDiff;
+        gameState.worldProgress[worldId] = 0;
+        // 如果有当前世界天赋池，清除
+        if (gameState.worldTalentPool) gameState.worldTalentPool[worldId] = [];
+        document.body.removeChild(overlay);
+        loadStage(entryKey);
+    };
+}
+</script>
+<script>
+// ========== ui.js ==========
+// 万界行者 - UI系统
+function showChoices(choices) {
+    const c = document.getElementById('choicesArea');
+    c.innerHTML = '';
+    choices.forEach((ch, i) => {
+        const b = document.createElement('button');
+        b.className = 'choice-btn';
+        b.innerHTML = '<span class="num">' + (i + 1) + '</span>' + ch.text;
+        b.onclick = () => makeChoice(ch);
+        c.appendChild(b);
+    });
+}
+
+function makeChoice(ch) {
+    document.getElementById('storyText').innerHTML += '<br><span class="choice-text">▶ ' + ch.text + '</span>';
+    if (ch.battle) { pendingBattleNext = ch.nextStage; startBattle(ch.battle); return; }
+    setTimeout(() => {
+        if (ch.heal) { gameState.hp = Math.min(gameState.maxHp, gameState.hp + 30); updatePlayerUI(); }
+        loadStage(ch.nextStage);
+    }, 500);
+}
+
+function updatePlayerUI() {
+    document.getElementById('playerName').textContent = gameState.playerName;
+    document.getElementById('playerLevel').textContent = 'Lv.' + gameState.level + ' · ' + getLevelName(gameState.level);
+    document.getElementById('expFill').style.width = ((gameState.exp % (gameState.level * 100)) / (gameState.level * 100) * 100) + '%';
+    document.getElementById('hpValue').textContent = Math.max(0, gameState.hp) + '/' + gameState.maxHp;
+    // 天赋加成提示
+    const tb = gameState._talentBonuses || {};
+    document.getElementById('atkValue').innerHTML = gameState.atk + '<span id="atkBonusHint" style="font-size:0.65em;' + (tb.atkTotal > 0 ? 'color:#6cf' : 'display:none') + ';">' + (tb.atkTotal > 0 ? ' (天赋+' + tb.atkTotal + ')' : '') + '</span>';
+    document.getElementById('defValue').innerHTML = gameState.def + '<span id="defBonusHint" style="font-size:0.65em;' + (tb.defTotal > 0 ? 'color:#6cf' : 'display:none') + ';">' + (tb.defTotal > 0 ? ' (天赋+' + tb.defTotal + ')' : '') + '</span>';
+    document.getElementById('spdValue').innerHTML = gameState.spd + '<span id="spdBonusHint" style="font-size:0.65em;' + (tb.spdTotal > 0 ? 'color:#6cf' : 'display:none') + ';">' + (tb.spdTotal > 0 ? ' (天赋+' + tb.spdTotal + ')' : '') + '</span>';
+    // 金币显示
+    const goldEl = document.getElementById('goldValue');
+    if (goldEl) goldEl.textContent = gameState.gold;
+    // 背包数量
+    const invCountEl = document.getElementById('invCount');
+    if (invCountEl) invCountEl.textContent = '(' + gameState.inventory.length + '/' + gameState.maxInventory + ')';
+    // 属性点显示
+    const fpEl = document.getElementById('freePointsValue');
+    if (fpEl) fpEl.textContent = gameState.freePoints;
+
+    // Buff状态栏
+    const buffBar = document.getElementById('buffBar');
+    if (buffBar) {
+        if (gameState.buffs && gameState.buffs.length > 0) {
+            buffBar.style.display = 'flex';
+            buffBar.innerHTML = gameState.buffs.map(b =>
+                '<span class="buff-tag">' + (b.name || (b.stat + '+' + b.value)) + ' <span class="buff-turns">' + b.duration + '回合</span></span>'
+            ).join('');
+        } else {
+            buffBar.style.display = 'none';
+            buffBar.innerHTML = '';
+        }
+    }
+
+    // 动态世界进度
+    const wp = document.getElementById('worldProgress');
+    wp.innerHTML = '';
+    for (const [wId, w] of Object.entries(WORLDS)) {
+        const progress = gameState.worldProgress[wId] || 0;
+        const completed = gameState.completedWorlds.includes(wId);
+        wp.innerHTML += '<div class="world-card' + (completed ? ' completed' : '') + '">' +
+            '<div class="world-name ' + wId + '">' + w.icon + ' ' + w.name + '</div>' +
+            '<div class="world-stages">' + progress + '/' + getTotalStages(wId) + '关' + (completed ? ' ✅' : '') + '</div></div>';
+    }
+}
+
+function getLevelTitle(lv) { return getLevelName(lv); }
+
+function checkLevelUp() {
+    while (gameState.exp >= gameState.level * 100) {
+        gameState.exp -= gameState.level * 100;
+        gameState.level++;
+        gameState.freePoints += 3; // 每升级获得3个分配点
+        recalculateStats();
+        gameState.hp = gameState.maxHp; // 升级后补满生命值
+        document.getElementById('storyText').innerHTML += '<br><span class="success">✦ 升级！Lv.' + gameState.level + ' · ' + getLevelName(gameState.level) + '（属性点+3） ✦</span>';
+    }
+    updatePlayerUI();
+    // 升级后在剧情区渲染属性点分配按钮
+    renderAttrPointsInline();
+}
+
+// ========== 剧情区内联属性点分配 ==========
+function renderAttrPointsInline() {
+    if (!gameState.freePoints || gameState.freePoints <= 0) return;
+    const choicesArea = document.getElementById('choicesArea');
+    if (!choicesArea) return;
+    const btns = choicesArea.querySelectorAll('.attr-inline-btn');
+    // 如果已有内联属性按钮，只更新数量文本
+    if (btns.length > 0) {
+        const header = choicesArea.querySelector('.attr-inline-header');
+        if (header) header.innerHTML = '可分配属性点：<span style="color:#fd0;font-weight:bold;">' + gameState.freePoints + '</span>（每点+3）';
+        return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.className = 'attr-inline-area';
+    wrapper.style.cssText = 'background:rgba(30,20,50,0.85);border:1px solid #554;border-radius:10px;padding:12px;margin:10px 0;';
+    wrapper.innerHTML = '<div class="attr-inline-header" style="text-align:center;margin-bottom:8px;color:#cca;font-size:0.9em;">可分配属性点：<span style="color:#fd0;font-weight:bold;">' + gameState.freePoints + '</span>（每点+3）</div>' +
+        '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+        '<button class="attr-inline-btn choice-btn" onclick="allocatePointInline(\'hp\',this)" style="background:linear-gradient(135deg,#2a5,#1a4);border:none;color:#afa;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.9em;">❤️ 生命+3</button>' +
+        '<button class="attr-inline-btn choice-btn" onclick="allocatePointInline(\'atk\',this)" style="background:linear-gradient(135deg,#a52,#941);border:none;color:#faa;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.9em;">⚔️ 攻击+3</button>' +
+        '<button class="attr-inline-btn choice-btn" onclick="allocatePointInline(\'def\',this)" style="background:linear-gradient(135deg,#25a,#14a);border:none;color:#aaf;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.9em;">🛡️ 防御+3</button>' +
+        '<button class="attr-inline-btn choice-btn" onclick="allocatePointInline(\'spd\',this)" style="background:linear-gradient(135deg,#aa5,#994);border:none;color:#ffa;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.9em;">💨 速度+3</button>' +
+        '</div>';
+    // 插入到 choicesArea 的最前面
+    choicesArea.insertBefore(wrapper, choicesArea.firstChild);
+}
+
+function allocatePointInline(stat, btnEl) {
+    if (gameState.freePoints <= 0) { showSpiritDialog('没有可分配的属性点！'); return; }
+    gameState.freePoints--;
+    gameState.allocatedPoints[stat]++;
+    recalculateStats();
+    updatePlayerUI();
+    showSpiritDialog('分配成功！' + stat.toUpperCase() + '+3');
+    // 更新或移除内联按钮
+    if (gameState.freePoints <= 0) {
+        // 全部分配完，移除内联区域
+        const area = document.querySelector('.attr-inline-area');
+        if (area) area.remove();
+    } else {
+        // 更新剩余数量
+        const header = document.querySelector('.attr-inline-header');
+        if (header) header.innerHTML = '可分配属性点：<span style="color:#fd0;font-weight:bold;">' + gameState.freePoints + '</span>（每点+3）';
+    }
+}
+
+function showSpiritDialog(text) {
+    const d = document.getElementById('spiritDialog');
+    document.getElementById('spiritText').textContent = text;
+    d.classList.add('active');
+    setTimeout(() => d.classList.remove('active'), 5000);
+}
+
+function showItemPopup(item) {
+    if (!item) return;
+    document.getElementById('itemIcon').textContent = item.icon || '📦';
+    document.getElementById('itemName').textContent = item.name || '物品';
+    document.getElementById('itemDesc').textContent = item.desc || '';
+    document.getElementById('itemPopup').classList.add('show');
+}
+
+function closeItemPopup() { document.getElementById('itemPopup').classList.remove('show'); }
+
+function showGameOver(victory) {
+    gameState.stats.deaths++;
+    const go = document.getElementById('gameOver');
+    go.classList.add('active');
+    go.classList.remove('victory', 'defeat');
+    if (victory) {
+        go.classList.add('victory');
+        document.getElementById('gameOverTitle').textContent = '🎉 通关成功！';
+        document.getElementById('gameOverSubtitle').textContent = '恭喜你完成了这段旅程！';
+        document.getElementById('gameOverText').textContent = '你已证明了自己的实力，万界将记住你的名字。';
+    } else {
+        go.classList.add('defeat');
+        document.getElementById('gameOverTitle').textContent = '💀 任务失败';
+        document.getElementById('gameOverSubtitle').textContent = gameState.playerName + '倒下了......';
+        document.getElementById('gameOverText').textContent = '读取存档或重新开始。';
+    }
+}
+
+function showEnding() {
+    const go = document.getElementById('gameOver');
+    go.classList.add('active', 'victory');
+    document.getElementById('gameOverTitle').textContent = '🏆 全部通关！';
+    document.getElementById('gameOverSubtitle').textContent = '恭喜完成《万界行者》四世界全部内容！';
+    document.getElementById('gameOverText').innerHTML =
+        '<strong>最终统计：</strong><br>' +
+        '战斗：' + gameState.stats.battles + '次 | 胜利：' + gameState.stats.wins + ' | 死亡：' + gameState.stats.deaths + '<br>' +
+        '最终等级：Lv.' + gameState.level + ' · ' + getLevelTitle(gameState.level) + '<br>' +
+        '生命：' + gameState.maxHp + ' | 攻击：' + gameState.atk + ' | 防御：' + gameState.def + ' | 速度：' + gameState.spd + '<br>' +
+        '金币：' + gameState.gold + ' | 背包：' + gameState.inventory.length + '/' + gameState.maxInventory + '<br>' +
+        '已完成世界：' + gameState.completedWorlds.length + '/4<br><br>' +
+        '<span class="success">感谢游玩《万界行者》！</span>';
+}
+
+function restartGame() { location.reload(); }
+
+function typeWriter(text, element, callback, speed) {
+    speed = speed || 20;
+    element.innerHTML = '';
+    // 快进模式：直接显示全部文字
+    if (skipMode) {
+        element.innerHTML = text;
+        if (callback) callback();
+        return;
+    }
+    let i = 0;
+    let aborted = false;
+    typeWriterAbort = () => { aborted = true; };
+    function type() {
+        if (aborted) {
+            element.innerHTML = text;
+            if (callback) callback();
+            return;
+        }
+        if (i < text.length) {
+            if (text[i] === '<') { const end = text.indexOf('>', i); element.innerHTML += text.substring(i, end + 1); i = end + 1; }
+            else { element.innerHTML += text[i]; i++; }
+            setTimeout(type, speed);
+        } else { typeWriterAbort = null; if (callback) callback(); }
+    }
+    type();
+}
+
+function createParticles() {
+    const c = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDelay = Math.random() * 15 + 's';
+        p.style.animationDuration = (10 + Math.random() * 10) + 's';
+        c.appendChild(p);
+    }
+}
+
+// ========== 天赋系统UI（支持多天赋+世界选择保留） ==========
+
+function drawTalent(rank, isWorldDraw) {
+    const pool = talentPool[rank] || talentPool['D'];
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    document.getElementById('drawTalentIcon').innerHTML = t.icon;
+    document.getElementById('drawTalentName').textContent = t.name;
+    document.getElementById('drawTalentRank').textContent = rank + '级';
+    document.getElementById('drawTalentRank').className = 'talent-rank ' + rank.toLowerCase();
+    document.getElementById('talentDraw').classList.add('active');
+    // 暂存天赋，等确认
+    window._pendingTalent = t;
+    window._pendingTalentRank = rank;
+    window._pendingIsWorldDraw = isWorldDraw || false;
+}
+
+function confirmTalent() {
+    const t = window._pendingTalent;
+    if (!t) { document.getElementById('talentDraw').classList.remove('active'); return; }
+    document.getElementById('talentDraw').classList.remove('active');
+
+    // 补上rank属性（talentPool中的天赋对象不含rank，需手动附加）
+    const rank = window._pendingTalentRank || 'D';
+    if (!t.rank) t.rank = rank;
+
+    if (window._pendingIsWorldDraw && currentStageData && currentStageData.world) {
+        // 世界天赋抽取：存入世界天赋池
+        const wId = currentStageData.world;
+        if (!gameState.worldTalentPool[wId]) gameState.worldTalentPool[wId] = [];
+        gameState.worldTalentPool[wId].push(t);
+        gameState.worldTalentDraws[wId] = (gameState.worldTalentDraws[wId] || 0) + 1;
+        const remaining = 3 - gameState.worldTalentDraws[wId];
+        showSpiritDialog('抽到了「' + t.name + '」！本世界还可抽' + Math.max(0, remaining) + '次。');
+    } else {
+        // 非世界抽取（旧系统兼容）：添加到当前天赋
+        gameState.talents.push(t);
+        showSpiritDialog('获得天赋：「' + t.name + '」！');
+    }
+
+    window._pendingTalent = null;
+    recalculateStats();
+    updateTalentUI();
+    updatePlayerUI();
+    showStageContent(currentStageData);
+}
+
+function updateTalentUI() {
+    // 合并已保留天赋 + 当前天赋 + 所有世界天赋池中的待保留天赋
+    const allTalents = (gameState.talents || []).concat(gameState.keptTalents || []);
+    // 收集所有世界池中的天赋（待保留）
+    const poolTalents = [];
+    if (gameState.worldTalentPool) {
+        Object.keys(gameState.worldTalentPool).forEach(function(wId) {
+            (gameState.worldTalentPool[wId] || []).forEach(function(t) {
+                var copy = Object.assign({}, t);
+                copy._pendingKeep = true;
+                poolTalents.push(copy);
+            });
+        });
+    }
+    const displayTalents = allTalents.concat(poolTalents);
+
+    const countEl = document.getElementById('talentCount');
+    if (countEl) countEl.textContent = allTalents.length > 0 ? '(' + allTalents.length + '个)' : '';
+
+    const listEl = document.getElementById('talentList');
+    if (!listEl) return;
+
+    if (displayTalents.length === 0) {
+        listEl.innerHTML = '<div class="talent-card" id="talentCard"><div class="talent-icon" id="talentIcon">⚡</div><div class="talent-info"><div><span class="talent-name" id="talentName">无天赋</span><span id="talentRank"></span></div><div class="talent-desc" id="talentDesc">等待抽取</div></div></div>';
+        return;
+    }
+
+    let html = '';
+    displayTalents.forEach((t, i) => {
+        const rank = t.rank || 'D';
+        const rankClass = rank.toLowerCase();
+        const pendingTag = t._pendingKeep ? ' <span style="color:#fa0;font-size:0.7em;">[待保留]</span>' : '';
+        html += '<div class="talent-mini-card"><span class="tmi-icon">' + (t.icon || '⚡') + '</span><div><div class="tmi-name">' + t.name + ' <span class="talent-rank ' + rankClass + '" style="font-size:0.75em;">' + rank + '</span>' + pendingTag + '</div><div class="tmi-desc">' + (t.desc || '') + '</div></div></div>';
+    });
+    listEl.innerHTML = html;
+}
+
+// ========== 背包/装备UI ==========
+function toggleInventory() {
+    const panel = document.getElementById('inventoryPanel');
+    if (panel.classList.contains('active')) {
+        panel.classList.remove('active');
+        return;
+    }
+    panel.classList.add('active');
+    renderInventory();
+    renderEquipment();
+    renderAttributePoints();
+}
+
+function renderInventory() {
+    const container = document.getElementById('inventoryItems');
+    if (!container) return;
+    container.innerHTML = '';
+    // 背包扩展按钮
+    const nextExpand = getNextExpand();
+    if (nextExpand) {
+        const expandDiv = document.createElement('div');
+        expandDiv.style.cssText = 'text-align:center;padding:10px;margin-bottom:10px;border:1px dashed rgba(255,200,100,0.4);border-radius:8px;';
+        expandDiv.innerHTML = '<div style="color:#fa6;font-size:0.9em;margin-bottom:5px;">📦 扩展背包容量</div>' +
+            '<div style="color:#88a;font-size:0.8em;">' + nextExpand.name + '：' + gameState.maxInventory + ' → ' + nextExpand.maxSlots + '格</div>' +
+            '<button class="inv-btn" style="margin-top:8px;background:linear-gradient(135deg,rgba(200,150,50,0.4),rgba(180,120,30,0.4));border-color:rgba(255,200,100,0.5);color:#fd0;" onclick="expandInventory()">' +
+            '💰 扩展（' + nextExpand.cost + '金币）</button>';
+        container.appendChild(expandDiv);
+    } else {
+        const maxDiv = document.createElement('div');
+        maxDiv.style.cssText = 'text-align:center;padding:8px;margin-bottom:10px;color:#6f6;font-size:0.85em;border:1px solid rgba(100,255,100,0.3);border-radius:8px;';
+        maxDiv.textContent = '✅ 背包已达最大容量（' + gameState.maxInventory + '格）';
+        container.appendChild(maxDiv);
+    }
+    if (gameState.inventory.length === 0) {
+        container.innerHTML += '<div style="color:#666;text-align:center;padding:20px;">背包为空</div>';
+        return;
+    }
+    gameState.inventory.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'inv-item';
+        const rarityClass = item.rarity || 'common';
+        let btnsHtml = '';
+        if (item.subtype === 'npc_heal') {
+            btnsHtml += '<button class="inv-btn" onclick="useConsumable(' + item.uid + ', \'NPC\')">给NPC</button>';
+        } else if (item.type === 'consumable') {
+            const usedLabel = item.subtype === 'permanent' && item.applied ? '已使用' : '使用';
+            btnsHtml += '<button class="inv-btn" onclick="useConsumable(' + item.uid + ')"' + (item.applied ? ' disabled' : '') + '>' + usedLabel + '</button>';
+        }
+        if (['weapon','armor','accessory'].includes(item.type)) {
+            btnsHtml += '<button class="inv-btn" onclick="equipItem(' + item.uid + ')">装备</button>';
+        }
+        btnsHtml += '<button class="inv-btn inv-btn-danger" onclick="removeItemFromInventory(' + item.uid + ');renderInventory();">丢弃</button>';
+        div.innerHTML = '<div class="inv-icon">' + (item.icon || '📦') + '</div>' +
+            '<div class="inv-info"><div class="inv-name rarity-' + rarityClass + '">' + (item.name || '未知物品') + '</div>' +
+            '<div class="inv-desc">' + (item.desc || '') + '</div></div>' +
+            btnsHtml;
+        container.appendChild(div);
+    });
+}
+
+function renderEquipment() {
+    const container = document.getElementById('equipmentSlots');
+    if (!container) return;
+    container.innerHTML = '';
+    const slots = [
+        { key: 'weapon', label: '武器', icon: '⚔️' },
+        { key: 'armor', label: '防具', icon: '🛡️' },
+        { key: 'accessory', label: '饰品', icon: '💍' }
+    ];
+    slots.forEach(s => {
+        const eq = gameState.equipment[s.key];
+        const div = document.createElement('div');
+        div.className = 'equip-slot';
+        if (eq) {
+            div.innerHTML = '<div class="equip-icon">' + (eq.icon || '📦') + '</div>' +
+                '<div class="equip-info"><div class="equip-name">' + eq.name + '</div>' +
+                '<div class="equip-desc">' + eq.desc + '</div></div>' +
+                '<button class="inv-btn inv-btn-danger" onclick="unequipItem(\'' + s.key + '\');renderEquipment();renderInventory();">卸下</button>';
+        } else {
+            div.innerHTML = '<div class="equip-icon empty">' + s.icon + '</div>' +
+                '<div class="equip-info"><div class="equip-name empty">空（' + s.label + '）</div></div>';
+        }
+        container.appendChild(div);
+    });
+}
+
+function renderAttributePoints() {
+    const container = document.getElementById('attrPointsArea');
+    if (!container) return;
+    container.innerHTML = '';
+    if (gameState.freePoints <= 0) return;
+    container.innerHTML = '<div class="attr-points-header">可分配属性点：<span style="color:#fd0;font-weight:bold;">' + gameState.freePoints + '</span>（每点+3对应属性）</div>' +
+        '<div class="attr-points-btns">' +
+        '<button class="inv-btn" onclick="allocatePoint(\'hp\')">生命+3</button>' +
+        '<button class="inv-btn" onclick="allocatePoint(\'atk\')">攻击+3</button>' +
+        '<button class="inv-btn" onclick="allocatePoint(\'def\')">防御+3</button>' +
+        '<button class="inv-btn" onclick="allocatePoint(\'spd\')">速度+3</button>' +
+        '</div>';
+}
+
+</script>
+<script>
+// ========== save.js ==========
+// 万界行者 - 存档系统
+function getSaveSlots() {
+    try { const d = localStorage.getItem(SAVE_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+}
+
+function saveGame(slotName) {
+    const slots = getSaveSlots();
+    const data = {
+        ...JSON.parse(JSON.stringify(gameState)),
+        savedAt: new Date().toLocaleString('zh-CN'),
+        slotName: slotName || ('存档' + (slots.length + 1)),
+        stageNum: currentStageData?.stageNum || 0,
+        stageName: currentStageData?.name || '',
+        worldName: currentStageData?.worldName || ''
+    };
+    data.enemy = null; data.inBattle = false;
+    slots.push(data);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(slots));
+    autoSave(); updateSaveInfo();
+    alert('✅ 已保存到「' + (slotName || data.slotName) + '」');
+}
+
+function loadGame(slotIndex) {
+    const slots = getSaveSlots();
+    if (!slots[slotIndex]) return;
+    const defaults = defaultState();
+    gameState = { ...defaults, ...slots[slotIndex] };
+    // 确保新增字段存在（兼容旧存档）
+    if (!gameState.freePoints) gameState.freePoints = 0;
+    if (!gameState.allocatedPoints) gameState.allocatedPoints = { hp: 0, atk: 0, def: 0, spd: 0 };
+    if (!gameState.talents) gameState.talents = [];
+    if (!gameState.keptTalents) gameState.keptTalents = [];
+    if (!gameState.worldTalentDraws) gameState.worldTalentDraws = { zombie: 0, xianxia: 0, scifi: 0, cyber: 0 };
+    if (!gameState.worldTalentPool) gameState.worldTalentPool = { zombie: [], xianxia: [], scifi: [], cyber: [] };
+    if (!gameState.buffs) gameState.buffs = [];
+    if (!gameState.inventory) gameState.inventory = [];
+    if (!gameState.equipment) gameState.equipment = { weapon: null, armor: null, accessory: null };
+    if (!gameState.completedWorlds) gameState.completedWorlds = [];
+    if (!gameState.worldProgress) gameState.worldProgress = { zombie: 0, xianxia: 0, scifi: 0, cyber: 0 };
+    if (!gameState.worldDifficulty) gameState.worldDifficulty = {};
+    if (!gameState.worldEquipDropTracker) gameState.worldEquipDropTracker = {};
+    // 确保maxInventory存在（兼容旧存档，旧版默认20）
+    if (!gameState.maxInventory) gameState.maxInventory = 20;
+    gameState.enemy = null; gameState.inBattle = false;
+    document.getElementById('systemPanel').classList.add('active');
+    updatePlayerUI(); updateTalentUI();
+    closeSaveList();
+    loadStage(gameState.stageId);
+    updateSaveInfo();
+}
+
+function deleteSave(slotIndex) {
+    const slots = getSaveSlots();
+    slots.splice(slotIndex, 1);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(slots));
+    showSaveList('load');
+}
+
+function autoSave() {
+    const data = {
+        ...JSON.parse(JSON.stringify(gameState)),
+        savedAt: new Date().toLocaleString('zh-CN'),
+        stageNum: currentStageData?.stageNum || 0,
+        stageName: currentStageData?.name || '',
+        worldName: currentStageData?.worldName || ''
+    };
+    data.enemy = null; data.inBattle = false;
+    try { localStorage.setItem('wanjie4_autosave', JSON.stringify(data)); } catch(e) {}
+}
+
+function updateSaveInfo() {
+    try {
+        const auto = JSON.parse(localStorage.getItem('wanjie4_autosave'));
+        document.getElementById('saveInfo').textContent = auto ? ('自动存档：' + (auto.worldName || '') + ' 第' + (auto.stageNum || 0) + '关 · ' + (auto.stageName || '')) : '未存档';
+    } catch(e) { document.getElementById('saveInfo').textContent = '未存档'; }
+}
+
+function showSaveList(mode) {
+    const list = document.getElementById('saveList');
+    const container = document.getElementById('saveSlots');
+    list.classList.add('active');
+    container.innerHTML = '';
+    const slots = getSaveSlots();
+    if (slots.length === 0) {
+        container.innerHTML = '<div class="no-saves">暂无存档</div>';
+    } else {
+        slots.forEach((s, i) => {
+            const div = document.createElement('div');
+            div.className = 'save-slot';
+            div.innerHTML = '<div class="save-slot-info"><span class="save-slot-name">' + (s.slotName || '存档' + (i+1)) + '</span><span class="save-slot-date">' + (s.savedAt || '') + '</span></div><div class="save-slot-detail">' + (s.worldName || '') + ' 第' + (s.stageNum || 0) + '关 · ' + (s.stageName || '') + ' · Lv.' + (s.level || 1) + '</div>';
+            div.onclick = () => {
+                if (mode === 'save') { saveGame(s.slotName || ('存档' + (i+1))); }
+                else { if (confirm('确定要读取「' + (s.slotName || ('存档'+(i+1))) + '」吗？')) loadGame(i); }
+            };
+            container.appendChild(div);
+        });
+    }
+    if (mode === 'save') {
+        const newDiv = document.createElement('div');
+        newDiv.className = 'save-slot';
+        newDiv.innerHTML = '<div class="save-slot-name">➕ 新建存档</div><div class="save-slot-detail">保存当前进度</div>';
+        newDiv.onclick = () => {
+            const name = prompt('请输入存档名称：', '存档' + (slots.length + 1));
+            if (name) { saveGame(name); closeSaveList(); }
+        };
+        container.appendChild(newDiv);
+    }
+}
+
+function closeSaveList() { document.getElementById('saveList').classList.remove('active'); }
+
+function confirmNewGame() {
+    if (confirm('确定要开始新游戏吗？当前进度将丢失。')) {
+        localStorage.removeItem('wanjie4_autosave');
+        gameState = defaultState();
+        document.getElementById('systemPanel').classList.remove('active');
+        document.getElementById('stageInfo').classList.remove('active');
+        document.getElementById('systemSpace').classList.remove('active');
+        document.getElementById('gameOver').classList.remove('active');
+        document.getElementById('storyText').innerHTML = '';
+        document.getElementById('choicesArea').innerHTML = '';
+        updateSaveInfo();
+        loadStage('intro');
+    }
+}
+
+
+</script>
+<script>
+// ========== 初始化 ==========
+window.onload = function() {
+    createParticles();
+    updateSaveInfo();
+    try {
+        const auto = JSON.parse(localStorage.getItem('wanjie4_autosave'));
+        if (auto && auto.stageId) {
+            if (confirm('检测到自动存档：' + (auto.worldName || '') + ' 第' + (auto.stageNum || 0) + '关\n是否继续上次的进度？')) {
+                loadGame(getSaveSlots().findIndex(s => s.savedAt === auto.savedAt));
+                return;
+            }
+        }
+    } catch(e) {}
+    loadStage('intro');
+};
+</script>
+
+
+
+</body>
+</html>
