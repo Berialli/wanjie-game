@@ -278,11 +278,17 @@ npx serve .
 
 > 游戏采用全中文界面，沉浸式文字冒险体验。
 
-<!-- 截图占位，添加后替换 -->
-<!-- ![丧尸围城](./screenshots/world1.png) -->
-<!-- ![仙侠大陆](./screenshots/world2.png) -->
-<!-- ![星际殖民](./screenshots/world3.png) -->
-<!-- ![赛博朋克](./screenshots/world4.png) -->
+| 世界一：丧尸围城 | 世界二：仙侠大陆 |
+|:---:|:---:|
+| ![丧尸围城](./screenshots/world1.png) | ![仙侠大陆](./screenshots/world2.png) |
+
+| 世界三：星际殖民 | 世界四：赛博朋克 |
+|:---:|:---:|
+| ![星际殖民](./screenshots/world3.png) | ![赛博朋克](./screenshots/world4.png) |
+
+| 系统空间 |
+|:---:|
+| ![系统空间](./screenshots/world5.png) |
 
 ---
 
